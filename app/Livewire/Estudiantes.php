@@ -30,8 +30,8 @@ class Estudiantes extends Component
 
     public function rules(){
         $rules = [
-            'nombre' => 'required|string|regex:/^[A-Za-z\s]+$/|max:255',
-            'apellido' => 'required|string|regex:/^[A-Za-z\s]+$/|max:255',
+            'nombre' => 'required|string|regex:/^[\pL\s]+$/u|max:255',
+            'apellido' => 'required|string|regex:/^[\pL\s]+$/u|max:255',
             'ci' => [
                 'required',
                 'string',

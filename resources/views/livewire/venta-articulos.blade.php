@@ -301,33 +301,44 @@
     @endif
 
     {{-- ========================================== --}}
-    {{-- RECIBO PARA IMPRIMIR (MISMO TAMAÑO)        --}}
+    {{-- RECIBO PARA IMPRIMIR (OPTIMIZADO EN ALTURA)--}}
     {{-- ========================================== --}}
     @if($datosRecibo)
     <div class="zona-impresion bg-white">
-        <div class="text-center mb-4 border-b-2 border-dashed border-gray-400 pb-4">
-            <h1 class="font-black text-2xl uppercase tracking-widest">IGLA POTOSÍ</h1>
-            <p class="text-sm">Instituto Técnico Gastronómico</p>
-            <p class="text-sm">Telfs 74289575</p>
-            <p class="text-xs">Calle Tarija #30, Potosí - Bolivia</p>
+        
+        {{-- 1. Cabecera del Instituto (Más compacta) --}}
+        <div class="text-center mb-3 border-b-2 border-dashed border-gray-400 pb-2">
+            <h1 class="font-black text-2xl uppercase tracking-widest leading-none mb-1">IGLA POTOSÍ</h1>
+            {{-- <p class="text-sm font-bold">Instituto Técnico Gastronómico</p> --}}
+            <p class="text-xs text-gray-600 mt-1">Telfs 74289575 &nbsp;|&nbsp; Calle Tarija #30, Potosí - Bolivia</p>
         </div>
 
-        <div class="text-center mb-4">
-            <h2 class="font-bold text-lg uppercase">Comprobante de Venta</h2>
-            <p class="text-sm">Nro: <strong>{{ $datosRecibo['nro_recibo'] }}</strong></p>
+        {{-- 2. Título y Número (A los extremos) --}}
+        <div class="flex justify-between items-end mb-4 border-b border-gray-800 pb-1">
+            <h2 class="font-bold text-lg uppercase tracking-wide">Comprobante de Venta</h2>
+            <p class="text-sm">Nro: <span class="font-bold text-lg">{{ $datosRecibo['nro_recibo'] }}</span></p>
         </div>
 
-        <div class="mb-4 text-sm border-b border-gray-300 pb-2">
-            <p><strong>Fecha:</strong> {{ $datosRecibo['fecha'] }}</p>
-            <p><strong>Estudiante:</strong> {{ $datosRecibo['estudiante'] }}</p>
-            <p><strong>CI:</strong> {{ $datosRecibo['ci'] }}</p>
-            <p><strong>Cajero(a):</strong> {{ $datosRecibo['cajero'] }}</p>
+        {{-- 3. Datos a los extremos (Izquierda: Estudiante | Derecha: Cajero) --}}
+        <div class="flex justify-between mb-4 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100">
+            <div class="text-left">
+                {{-- <p class="mb-1"><span class="text-gray-500 uppercase text-[10px] font-bold block leading-none">Estudiante</span> <strong class="text-base">{{ $datosRecibo['estudiante'] }}</strong></p> --}}
+                <p><span class="text-gray-500 uppercase text-[10px] font-bold inline-block mr-1">Estudiante:</span> {{ $datosRecibo['estudiante'] }}</p>
+                <p><span class="text-gray-500 uppercase text-[10px] font-bold inline-block mr-1">CI:</span> {{ $datosRecibo['ci'] }}</p>
+            </div>
+            
+            <div class="text-right">
+                {{-- <p class="mb-1"><span class="text-gray-500 uppercase text-[10px] font-bold block leading-none">Fecha de emisión</span> <strong>{{ $datosRecibo['fecha'] }}</strong></p> --}}
+                <p><span class="text-gray-500 uppercase text-[10px] font-bold inline-block mr-1">Fecha de emisión:</span> {{ $datosRecibo['fecha'] }}</p>
+                <p><span class="text-gray-500 uppercase text-[10px] font-bold inline-block mr-1">Cajero(a):</span> {{ $datosRecibo['cajero'] }}</p>
+            </div>
         </div>
 
+        {{-- 4. Tabla de items (Más ajustada) --}}
         <table class="w-full text-sm mb-4">
             <thead>
                 <tr class="border-b-2 border-gray-800">
-                    <th class="text-left py-1">Cant.</th>
+                    <th class="text-left py-1 w-12">Cant.</th>
                     <th class="text-left py-1">Descripción</th>
                     <th class="text-right py-1">Importe</th>
                 </tr>
@@ -335,19 +346,20 @@
             <tbody>
                 @foreach($datosRecibo['items'] as $item)
                 <tr class="border-b border-dashed border-gray-200">
-                    <td class="py-2 pr-2 font-bold">{{ $item['cantidad'] }}</td>
-                    <td class="py-2 pr-2">
-                        <div class="font-bold">{{ $item['nombre'] }}</div>
-                        <div class="text-[10px] text-gray-500">{{ number_format($item['precio'], 2) }} Bs c/u</div>
+                    <td class="py-1.5 pr-2 font-bold align-top">{{ $item['cantidad'] }}</td>
+                    <td class="py-1.5 pr-2">
+                        <div class="font-bold leading-tight">{{ $item['nombre'] }}</div>
+                        <div class="text-[10px] text-gray-500">{{ number_format($item['precio'], 2) }} Bs </div>
                     </td>
-                    <td class="py-2 text-right font-mono font-bold">{{ number_format($item['subtotal'], 2) }}</td>
+                    <td class="py-1.5 text-right font-mono font-bold align-top">{{ number_format($item['subtotal'], 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
 
-        <div class="flex justify-end mb-8">
-            <div class="w-3/4 text-sm">
+        {{-- 5. Totales --}}
+        <div class="flex justify-end mb-6">
+            <div class="w-2/3 sm:w-1/2 text-sm">
                 <div class="flex justify-between font-black text-base border-t-2 border-gray-800 pt-1">
                     <span>TOTAL Bs:</span>
                     <span>{{ number_format($datosRecibo['total'], 2) }}</span>
@@ -363,48 +375,54 @@
             </div>
         </div>
 
-        <div class="text-center text-xs text-gray-500 border-t border-gray-300 pt-4">
+        {{-- 6. Pie de página --}}
+        <div class="text-center text-[11px] text-gray-500 border-t border-gray-300 pt-3">
             <p>Conserve este comprobante para cualquier reclamo.</p>
-            <p class="font-bold mt-1">¡Gracias por su preferencia!</p>
+            <p class="font-bold text-gray-800 mt-0.5">¡Gracias por su preferencia!</p>
         </div>
     </div>
     @endif
 
     {{-- ========================================== --}}
-{{-- CSS MÁGICO PARA IMPRESIÓN (EL MISMO)       --}}
-{{-- ========================================== --}}
-<style>
-    .zona-impresion { display: none; }
+    {{-- CSS MÁGICO PARA IMPRESIÓN                  --}}
+    {{-- ========================================== --}}
+    <style>
+        .zona-impresion { display: none; }
 
-    @media print {
-        nav, aside, .ocultar-al-imprimir, .no-imprimir { display: none !important; }
+        @media print {
+            nav, aside, .ocultar-al-imprimir, .no-imprimir { display: none !important; }
 
-        @page { margin: 0 !important; size: auto; }
-        
-        body, html { margin: 0 !important; padding: 0 !important; background-color: white !important; }
+            @page { margin: 0 !important; size: auto; }
+            
+            body, html { margin: 0 !important; padding: 0 !important; background-color: white !important; }
 
-        main, main > div, .container, .px-4 {
-            margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important;
-            border-radius: 0 !important; background: white !important; max-width: 100% !important;
+            main, main > div, .container, .px-4 {
+                margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important;
+                border-radius: 0 !important; background: white !important; max-width: 100% !important;
+            }
+
+            .zona-impresion {
+                display: block !important; position: absolute !important; top: 0 !important; left: 0 !important;
+                width: 100% !important; 
+                padding: 1cm 1.5cm !important; /* REDUCIMOS EL PADDING PARA AHORRAR HOJA */
+                border: none !important; box-shadow: none !important;
+                background: transparent !important; border-radius: 0 !important; color: black !important;
+            }
+
+            /* Forzamos a que Flexbox funcione en la impresora */
+            .zona-impresion .flex { display: flex !important; }
+            
+            .zona-impresion * { color: black !important; font-family: Arial, Helvetica, sans-serif !important; background: transparent !important; }
+            
+            .zona-impresion p, .zona-impresion td, .zona-impresion th, .zona-impresion span, .zona-impresion div { font-size: 11pt !important; line-height: 1.3 !important; }
+            .zona-impresion h1 { font-size: 16pt !important; margin-bottom: 2px !important; }
+            .zona-impresion h2 { font-size: 13pt !important; margin-bottom: 0 !important; text-transform: uppercase !important; }
+
+            .zona-impresion table { width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; border: none !important; }
+            .zona-impresion th, .zona-impresion td { border: none !important; border-bottom: 1px dashed #ccc !important; padding: 4px 0 !important; }
+            .zona-impresion thead th { border-bottom: 2px solid black !important; }
         }
-
-        .zona-impresion {
-            display: block !important; position: absolute !important; top: 0 !important; left: 0 !important;
-            width: 100% !important; padding: 1.5cm 2cm !important; border: none !important; box-shadow: none !important;
-            background: transparent !important; border-radius: 0 !important; color: black !important;
-        }
-
-        .zona-impresion * { color: black !important; font-family: Arial, Helvetica, sans-serif !important; background: transparent !important; }
-        
-        .zona-impresion p, .zona-impresion td, .zona-impresion th, .zona-impresion span, .zona-impresion div { font-size: 11pt !important; line-height: 1.4 !important; }
-        .zona-impresion h1 { font-size: 18pt !important; margin-bottom: 5px !important; }
-        .zona-impresion h2 { font-size: 14pt !important; margin-bottom: 5px !important; text-transform: uppercase !important; }
-
-        .zona-impresion table { width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; border: none !important; }
-        .zona-impresion th, .zona-impresion td { border: none !important; border-bottom: 1px dashed #ccc !important; padding: 6px 0 !important; }
-        .zona-impresion thead th { border-bottom: 2px solid black !important; }
-    }
-</style>
+    </style>
 
 </div> 
 

@@ -79,6 +79,19 @@
                     @error('gestion_inicio') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
 
+                {{-- Turno --}}
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Turno *</label>
+                    <select wire:model="id_turno" class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-shadow bg-white font-medium text-gray-700">
+                        <option value="">Seleccione un turno...</option>
+                        @foreach($turnos as $turno)
+                            <option value="{{ $turno->id_turno }}">{{ $turno->nombre }}</option>
+                        @endforeach
+                    </select>
+                    @error('id_turno') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                </div>
+
+
                 {{-- Año actual --}}
                 <div class="hidden">
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Año Actual (Curso)</label>

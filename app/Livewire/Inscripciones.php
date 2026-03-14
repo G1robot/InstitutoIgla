@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\EstudianteModel;
 use App\Models\PlanModel;
+use App\Models\TurnoModel;
 use App\Models\InscripcionModel;
 use App\Models\PagoModel;
 use App\Models\TarifaModel;
@@ -20,9 +21,11 @@ class Inscripciones extends Component
 
     public $estudiantes_encontrados = [];
     public $planes = [];
+    public $turnos = [];
 
     public $id_estudiante;
     public $id_plan;
+    public $id_turno;
     public $gestion_inicio;
     public $anio_actual=1;
     public $estado = 'activo';
@@ -33,6 +36,7 @@ class Inscripciones extends Component
     {
         $this->gestion_inicio = (int) date('Y');
         $this->planes = PlanModel::all();
+        $this->turnos = TurnoModel::all();
     }
 
     public function updatedSearchEstudiante()
@@ -86,6 +90,7 @@ class Inscripciones extends Component
     {
         $this->id_estudiante = '';
         $this->id_plan = '';
+        $this->id_turno = '';
         $this->gestion_inicio = (int) date('Y');
         $this->anio_actual = 1;
         $this->estado = 'activo';
@@ -98,6 +103,7 @@ class Inscripciones extends Component
         return [
             'id_estudiante' => 'required',
             'id_plan' => 'required',
+            'id_turno' => 'required|exists:turno,id_turno',
             'gestion_inicio' => 'required|integer|min:2000',
             'anio_actual' => 'required|integer|min:1',
             'estado' => 'required|in:activo,retirado,egresado',
@@ -113,6 +119,7 @@ class Inscripciones extends Component
             $ins = InscripcionModel::create([
                 'id_estudiante' => $this->id_estudiante,
                 'id_plan' => $this->id_plan,
+                'id_turno' => $this->id_turno,
                 'gestion_inicio' => $this->gestion_inicio,
                 'anio_actual' => $this->anio_actual,
                 'fecha_inscripcion' => Carbon::now(),
@@ -151,19 +158,13 @@ class Inscripciones extends Component
         
         // Si no hay PUA específico para ese año, buscamos el "permanente" (gestion null)
         if(!$tarifaPUA){
-            $tarifaPUA = TarifaModel::where('codigo', 'PUA')->whereNull('gestion')->first();
+            $tarifaPUA = TarifaModel::where('codigo', 'PUA')->orderBy('id_tarifa', 'desc')->first();
         }
 
-        $montoPUA = $tarifaPUA ? $tarifaPUA->monto : 0; // Si es 0, ojo, revisar tarifas
+        $montoPUA = $tarifaPUA ? $tarifaPUA->monto : 250; // Si es 0, ojo, revisar tarifas
 
         for ($y = 0; $y < $yearsCount; $y++) {
             $yearCalculado = $ins->gestion_inicio + $y;
-            
-            // Creamos el pago tipo PUA
-            // Nota: El PUA lo asociamos a la inscripción para saber que pertenece a este "contrato"
-            // O podríamos asociarlo a la Tarifa, pero tu lógica es "pagos de la inscripción".
-            // Vamos a usar la relación polimórfica apuntando a la INCRIPCION, 
-            // pero en descripción aclaramos que es PUA.
             
             PagoModel::create([
                 'origen_id' => $ins->id_inscripcion,
@@ -198,7 +199,7 @@ class Inscripciones extends Component
                     'id_estudiante' => $ins->id_estudiante,
                     
                     // Vence el 10 de cada mes
-                    'fecha_vencimiento' => Carbon::create($anio, $mes, 10), 
+                    'fecha_vencimiento' => Carbon::create($anio, $mes, 28), 
                     'fecha_pago' => null,
                     
                     'descripcion' => "Cuota $nombreMes $anio",
@@ -222,7 +223,7 @@ class Inscripciones extends Component
                     'fecha_vencimiento' => Carbon::create($anio, 3, 10), 
                     'fecha_pago' => null,
                     
-                    'descripcion' => "Colegiatura Anual Gestión $anio",
+                    'descripcion' => "Cuota Anual Gestión $anio",
                     'monto_total' => $plan->costo_anual,
                     'monto_abonado' => 0,
                     'estado' => 'pendiente',

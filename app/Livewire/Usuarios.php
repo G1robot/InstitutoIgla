@@ -24,7 +24,7 @@ class Usuarios extends Component
 
     public function rules(){
         $rules = [
-            'nombre' => 'required|string|regex:/^[A-Za-z\s]+$/|max:255',
+            'nombre' => 'required|string|regex:/^[\pL\s]+$/u|max:255',
             'telefono' => 'required|string|regex:/^\d+$/|max:255',
             'usuario' => [
                 'required',

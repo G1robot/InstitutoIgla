@@ -152,7 +152,7 @@
                 {{-- ========================================== --}}
                 {{-- ÁREA RESTRINGIDA (SOLO ADMINISTRADORES)    --}}
                 {{-- ========================================== --}}
-                @if(Auth::user()->rol === 'administrador')
+                {{-- @if(Auth::user()->rol === 'administrador') --}}
                     
                     <li class="text-xs font-black text-gray-400 px-4 mt-8 mb-2 tracking-wider border-t pt-4">CONFIGURACIÓN / ADMIN</li>
                     
@@ -189,14 +189,18 @@
                         </ul>
                     </li>
 
+                    @if(Auth::user()->rol === 'administrador')
+
                     <li>
                         <a href="{{ route('usuarios') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all {{ request()->routeIs('usuarios') ? 'bg-orange-50 text-orange-600 font-bold border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50 hover:text-orange-500' }}">
                             <i class="fa-solid fa-users-gear w-5 text-center {{ request()->routeIs('usuarios') ? 'text-orange-500' : 'text-gray-400' }}"></i>
                             <span>Usuarios y Accesos</span>
                         </a>
                     </li>
+                    @endif 
 
-                @endif {{-- Fin Área Restringida --}}
+                {{-- @endif  --}}
+                {{-- Fin Área Restringida --}}
 
                 <li class="text-xs font-black text-gray-400 px-4 mt-8 mb-2 tracking-wider border-t pt-4">REPORTES</li>
                 <li x-data="{ open: {{ request()->routeIs('reporte-arqueo') ? 'true' : 'false' }} }">

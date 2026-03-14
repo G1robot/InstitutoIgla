@@ -11,6 +11,7 @@ class InscripcionModel extends Model
     protected $fillable = [
         'id_estudiante',
         'id_plan',
+        'id_turno',
         'gestion_inicio',
         'anio_actual',
         'fecha_inscripcion',
@@ -28,5 +29,9 @@ class InscripcionModel extends Model
     public function pagos()
     {
         return $this->morphMany(PagoModel::class, 'origen');
+    }
+    public function turno()
+    {
+        return $this->belongsTo(TurnoModel::class, 'id_turno', 'id_turno');
     }
 }

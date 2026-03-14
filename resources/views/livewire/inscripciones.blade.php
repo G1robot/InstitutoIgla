@@ -50,8 +50,10 @@
 
                             {{-- Plan --}}
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-xs font-bold border border-gray-200">
-                                    <i class="fa-solid fa-layer-group text-orange-400 mr-1"></i> {{ $i->plan->nombre }}
+                                <span class="bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 flex items-center gap-2 w-max">
+                                    <span><i class="fa-solid fa-layer-group text-orange-500 mr-1"></i> {{ $i->plan->nombre }}</span>
+                                    <span class="text-gray-300">|</span>
+                                    <span class="text-gray-500"><i class="fa-regular fa-clock mr-1"></i> {{ $i->turno?->nombre ?? 'Sin turno' }}</span>
                                 </span>
                             </td>
 
