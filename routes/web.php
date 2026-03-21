@@ -17,6 +17,7 @@ use App\Http\Controllers\VentaArticulosController;
 use App\Http\Controllers\EgresoController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\CategoriasModulosController;
+use App\Http\Controllers\OtrosIngresosController;
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -37,5 +38,8 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/venta-articulos',[VentaArticulosController::class,'index'])->name('venta-articulos');
     Route::get('/egresos',[EgresoController::class,'index'])->name('egresos');
     Route::get('/reporte-arqueo',[ReporteController::class,'arqueo'])->name('reporte-arqueo');
+    Route::get('/reporte-ingresos',[ReporteController::class,'ingresos'])->name('reporte-ingresos');
+    Route::get('/reporte-egresos',[ReporteController::class,'egresos'])->name('reporte-egresos');
     Route::get('/categorias-modulos',[CategoriasModulosController::class,'index'])->name('categorias-modulos');
+    Route::get('/otros-ingresos',[OtrosIngresosController::class,'index'])->name('otros-ingresos');
 });

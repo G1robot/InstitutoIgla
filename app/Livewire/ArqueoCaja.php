@@ -42,10 +42,12 @@ class ArqueoCaja extends Component
             ->whereHas('pago', function($query) {
                 $query->where('estado', '!=', 'anulado'); 
             })
+            ->orderBy('fecha_transaccion', 'asc') // <-- ORDENAMIENTO DE INGRESOS
             ->get();
 
         $egresos = EgresoModel::with(['metodoPago', 'proveedor'])
             ->whereDate('fecha_egreso', $this->fecha_filtro)
+            ->orderBy('fecha_egreso', 'asc') // <-- ORDENAMIENTO DE EGRESOS
             ->get();
 
         // 2. Hacemos los cálculos sobre estas variables locales

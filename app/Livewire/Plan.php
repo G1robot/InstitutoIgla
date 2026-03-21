@@ -16,6 +16,7 @@ class Plan extends Component
     public $costo_anual = null;
     public $costo_mensual = null;
     public $tipo_pago = '';
+    public $costo_total = '';
     public $plan_id = '';
 
     public function rules(){
@@ -25,7 +26,8 @@ class Plan extends Component
             'duracion_meses' => 'nullable|integer|min:0',
             'costo_anual' => 'nullable|numeric|min:0',
             'costo_mensual' => 'nullable|numeric|min:0',
-            'tipo_pago' => 'required|in:mensual,anual',
+            'costo_total' => 'nullable|numeric|min:0',
+            'tipo_pago' => 'required',
         ];
         return $rules;
     }
@@ -58,6 +60,7 @@ class Plan extends Component
         $this->costo_anual=null;
         $this->costo_mensual=null;
         $this->tipo_pago='';
+        $this->costo_total='';
         $this->plan_id='';
     }
     public function enviarClick()
@@ -72,6 +75,7 @@ class Plan extends Component
             $plan->costo_anual = $this->costo_anual;
             $plan->costo_mensual = $this->costo_mensual;
             $plan->tipo_pago = $this->tipo_pago;
+            $plan->costo_total = $this->costo_total;
             $plan->save();
         } else {
             PlanModel::create([
@@ -80,6 +84,10 @@ class Plan extends Component
                 'duracion_meses' => $this->duracion_meses !== null ? $this->duracion_meses : ($this->duracion_anios !== null ? $this->duracion_anios * 12 : null),
                 'costo_anual' => $this->costo_anual,
                 'costo_mensual' => $this->costo_mensual,
+                'costo_total' => $this->costo_total 
+                    ?: ($this->duracion_anios > 0 
+                        ? ($this->costo_anual * $this->duracion_anios) 
+                        : ($this->duracion_meses > 0 ? ($this->costo_mensual * $this->duracion_meses) : 0)),
                 'tipo_pago' => $this->tipo_pago,
             ]);
         }
@@ -100,6 +108,7 @@ class Plan extends Component
         $this->duracion_meses = $plan->duracion_meses;
         $this->costo_anual = $plan->costo_anual;
         $this->costo_mensual = $plan->costo_mensual;
+        $this->costo_total = $plan->costo_total;
         $this->tipo_pago = $plan->tipo_pago;
         $this->openModal();
     }

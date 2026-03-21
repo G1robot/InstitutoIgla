@@ -1,5 +1,4 @@
 @extends('layouts.principal')
 @section('content')
-@livewire('pagos.inscripciones-pagos')
-
+    @livewire('ReporteEgresos')
 @endsection

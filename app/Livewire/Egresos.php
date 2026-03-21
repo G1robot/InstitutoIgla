@@ -10,6 +10,7 @@ use App\Models\MetodoPagoModel;
 use Carbon\Carbon;
 use App\Models\CajaModel;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class Egresos extends Component
 {
@@ -158,5 +159,24 @@ class Egresos extends Component
         $this->showModalProveedor = false;
         
         session()->flash('success', 'Proveedor creado.');
+    }
+
+    public function descargarReciboPdf()
+    {
+        if (!$this->datosRecibo) {
+            return;
+        }
+
+        $pdf = Pdf::loadView('livewire.pdf.egreso-recibo-pdf', [
+            'datosRecibo' => $this->datosRecibo
+        ]);
+
+        $pdf->setPaper('letter', 'portrait');
+
+        $nombreArchivo = 'Recibo_IGLA_Nro_' . $this->datosRecibo['nro_recibo'] . '.pdf';
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $nombreArchivo);
     }
 }

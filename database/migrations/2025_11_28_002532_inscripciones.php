@@ -162,7 +162,7 @@ return new class extends Migration
             $table->unsignedBigInteger('origen_id');
             $table->string('origen_type');
 
-            $table->unsignedBigInteger('id_estudiante'); 
+            $table->unsignedBigInteger('id_estudiante')->nullable(); 
 
             
             $table->date('fecha_vencimiento'); 

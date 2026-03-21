@@ -36,7 +36,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 bg-white">
                     @forelse($inscripciones as $i)
-                        <tr class="hover:bg-orange-50 transition-colors group">
+                        <tr wire:key="ins-{{ $i->id_inscripcion }}" class="hover:bg-orange-50 transition-colors group">
                             
                             {{-- Estudiante --}}
                             <td class="px-6 py-4 whitespace-nowrap">

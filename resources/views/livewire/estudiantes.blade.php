@@ -36,7 +36,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 bg-white">
                     @forelse($estudiantes as $item)
-                        <tr class="hover:bg-orange-50 transition-colors group">
+                        <tr wire:key="est-{{ $item->id_estudiante }}" class="hover:bg-orange-50 transition-colors group">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="font-bold text-gray-900">{{ $item->apellido }}, {{ $item->nombre }}</div>
                             </td>

@@ -19,65 +19,68 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left font-bold text-gray-500 uppercase tracking-wider">Estudiante</th>
-                        <th class="px-6 py-3 text-left font-bold text-gray-500 uppercase tracking-wider">Plan Académico</th>
-                        <th class="px-6 py-3 text-center font-bold text-gray-500 uppercase tracking-wider">Gestión</th>
-                        <th class="px-6 py-3 text-right font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 bg-white">
-                    @forelse($inscripciones as $ins)
-                        <tr wire:key="inscripcion-{{ $ins->id_inscripcion }}" class="hover:bg-blue-50 transition-colors group">
-                            
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="font-bold text-gray-900 flex items-center gap-2 text-base">
-                                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                        <i class="fa-solid fa-user-graduate text-xs"></i>
-                                    </div>
-                                    <div>
-                                        {{ $ins->estudiante->nombre }} {{ $ins->estudiante->apellido }}
-                                        <span class="block text-xs text-gray-500 font-mono font-normal">CI: {{ $ins->estudiante->ci }}</span>
-                                    </div>
-                                </div>
-                            </td>
-
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-xs font-bold border border-gray-200">
-                                    <i class="fa-solid fa-layer-group text-blue-400 mr-1"></i> {{ $ins->plan->nombre }}
-                                </span>
-                            </td>
-
-                            <td class="px-6 py-4 whitespace-nowrap text-center font-bold text-gray-700">
-                                {{ $ins->gestion_inicio }}
-                            </td>
-
-                            <td class="px-6 py-4 whitespace-nowrap text-right flex justify-end gap-2">
-                                {{-- Botón de Imprimir Extracto Completo --}}
-                                <button wire:click="prepararExtracto({{ $ins->id_inscripcion }})"
-                                    class="bg-white border border-gray-300 text-gray-700 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 px-3 py-1.5 rounded-lg shadow-sm transition font-bold text-xs flex items-center gap-1">
-                                    <i class="fa-solid fa-print"></i> Extracto
-                                </button>
-
-                                {{-- Botón para ver y cobrar Pagos --}}
-                                <button wire:click="verPagos({{ $ins->id_inscripcion }})"
-                                    class="bg-orange-600 text-white hover:bg-blue-700 px-4 py-1.5 rounded-lg shadow-sm transition font-bold text-xs flex items-center gap-1">
-                                    <i class="fa-solid fa-cash-register"></i> Cuotas
-                                </button>
-                            </td>
-                        </tr>
-                    @empty
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center text-gray-400">
-                                <i class="fa-solid fa-users-slash text-4xl mb-3 text-gray-300"></i>
-                                <p>No se encontraron estudiantes activos con esa búsqueda.</p>
-                            </td>
+                            <th class="px-6 py-3 text-left font-bold text-gray-500 uppercase tracking-wider">Estudiante</th>
+                            <th class="px-6 py-3 text-left font-bold text-gray-500 uppercase tracking-wider">Plan Académico</th>
+                            <th class="px-6 py-3 text-center font-bold text-gray-500 uppercase tracking-wider">Gestión</th>
+                            <th class="px-6 py-3 text-right font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 bg-white">
+                        @forelse($inscripciones as $ins)
+                            <tr wire:key="inscripcion-{{ $ins->id_inscripcion }}" class="hover:bg-blue-50 transition-colors group">
+                                
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="font-bold text-gray-900 flex items-center gap-2 text-base">
+                                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                            <i class="fa-solid fa-user-graduate text-xs"></i>
+                                        </div>
+                                        <div>
+                                            {{ $ins->estudiante->nombre }} {{ $ins->estudiante->apellido }}
+                                            <span class="block text-xs text-gray-500 font-mono font-normal">CI: {{ $ins->estudiante->ci }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-xs font-bold border border-gray-200">
+                                        <i class="fa-solid fa-layer-group text-blue-400 mr-1"></i> {{ $ins->plan->nombre }}
+                                    </span>
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap text-center font-bold text-gray-700">
+                                    {{ $ins->gestion_inicio }}
+                                </td>
+
+                                <td class="px-6 py-4 whitespace-nowrap text-right flex justify-end gap-2">
+                                    {{-- Botón de Imprimir Extracto Completo --}}
+                                    <button wire:click="prepararExtracto({{ $ins->id_inscripcion }})"
+                                        class="bg-white border border-gray-300 text-gray-700 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 px-3 py-1.5 rounded-lg shadow-sm transition font-bold text-xs flex items-center gap-1">
+                                        <i class="fa-solid fa-print"></i> Extracto
+                                    </button>
+
+                                    {{-- Botón para ver y cobrar Pagos --}}
+                                    <button wire:click="verPagos({{ $ins->id_inscripcion }})"
+                                        class="bg-orange-600 text-white hover:bg-blue-700 px-4 py-1.5 rounded-lg shadow-sm transition font-bold text-xs flex items-center gap-1">
+                                        <i class="fa-solid fa-cash-register"></i> Cuotas
+                                    </button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center text-gray-400">
+                                    <i class="fa-solid fa-users-slash text-4xl mb-3 text-gray-300"></i>
+                                    <p>No se encontraron estudiantes activos con esa búsqueda.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
             @if(method_exists($inscripciones, 'hasPages') && $inscripciones->hasPages())
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
                     {{ $inscripciones->links() }}
@@ -97,10 +100,18 @@
     <div class="zona-impresion bg-white">
         
         {{-- 1. Cabecera del Instituto (Compacta) --}}
-        <div class="text-center mb-3 border-b-2 border-dashed border-gray-400 pb-2">
-            <h1 class="font-black text-2xl uppercase tracking-widest leading-none mb-1">IGLA POTOSÍ</h1>
-            {{-- <p class="text-sm font-bold">Instituto Técnico Gastronómico</p> --}}
-            <p class="text-xs text-gray-600 mt-1">Telfs 74289575 &nbsp;|&nbsp; Calle Tarija #30, Potosí - Bolivia</p>
+        <div class="flex items-center justify-between mb-3 border-b-2 border-dashed border-gray-400 pb-2">
+            {{-- Lado Izquierdo: LOGO --}}
+            <div class="w-1/4">
+                <img src="{{ asset('img/LOGO_POTOSI_01.png') }}" alt="Logo IGLA" class="max-h-16 object-contain grayscale" style="filter: grayscale(100%);">
+            </div>
+            
+            {{-- Lado Derecho: Textos --}}
+            <div class="w-3/4 text-right">
+                <h1 class="font-black text-2xl uppercase tracking-widest leading-none mb-1">IGLA POTOSÍ</h1>
+                <p class="text-xs text-gray-600 font-bold mt-1">Instituto Técnico Gastronómico</p>
+                <p class="text-[10px] text-gray-500 mt-0.5">Telfs 74289575 &nbsp;|&nbsp; Calle Tarija #30, Potosí</p>
+            </div>
         </div>
 
         {{-- 2. Título y Número --}}
@@ -155,10 +166,18 @@
 
         {{-- 6. Totales --}}
         <div class="flex justify-end mb-6">
-            <div class="w-2/3 sm:w-1/2 text-sm">
+            <div class="w-3/4 sm:w-1/2 text-sm">
                 <div class="flex justify-between font-black text-lg border-t-2 border-gray-800 pt-1">
                     <span>TOTAL ABONADO Bs:</span>
                     <span>{{ number_format($datosRecibo['monto_pagado'], 2) }}</span>
+                </div>
+                <div class="flex justify-between text-gray-600 mt-1">
+                    <span>Efectivo/Ingresado:</span>
+                    <span>{{ number_format($datosRecibo['ingresado'] ?? $datosRecibo['monto_pagado'], 2) }}</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                    <span>Cambio:</span>
+                    <span>{{ number_format($datosRecibo['cambio'] ?? 0, 2) }}</span>
                 </div>
             </div>
         </div>
@@ -269,9 +288,12 @@
             .zona-impresion {
                 display: block !important; position: absolute !important; top: 0 !important; left: 0 !important;
                 width: 100% !important; 
-                padding: 1cm 1.5cm !important; /* PADDING REDUCIDO PARA AHORRAR ESPACIO */
+                padding: 1cm 1.5cm !important; 
                 border: none !important; box-shadow: none !important;
-                background: transparent !important; border-radius: 0 !important; color: black !important;
+                /* LA MAGIA: Fondo blanco sólido y capa superior para tapar la vista web */
+                background: white !important; 
+                z-index: 9999 !important; 
+                border-radius: 0 !important; color: black !important;
             }
             .zona-impresion * { color: black !important; font-family: Arial, Helvetica, sans-serif !important; background: transparent !important; }
             .zona-impresion p, .zona-impresion td, .zona-impresion th, .zona-impresion span, .zona-impresion div { font-size: 11pt !important; line-height: 1.3 !important; }

@@ -14,6 +14,7 @@ class PlanModel extends Model
         'duracion_meses',
         'costo_anual',
         'costo_mensual',
+        'costo_total',
         'tipo_pago',
     ];
 }

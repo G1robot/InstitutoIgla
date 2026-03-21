@@ -141,37 +141,32 @@ class Inscripciones extends Component
     private function generarPagos(InscripcionModel $ins)
     {
         $plan = PlanModel::find($ins->id_plan);
-        $totalMonths = (int) ($plan->duracion_meses ?? 0); // Ej: 36 meses
-        
-        // Calcular años completos para el PUA
-        // Si dura 36 meses -> 3 años. Si dura 10 meses -> 1 año.
+        $totalMonths = (int) ($plan->duracion_meses ?? 0); 
+
         $yearsCount = ceil($totalMonths / 12); 
         if($yearsCount < 1) $yearsCount = 1;
 
-        // --- A. Generar Cobros de PUA (Anual) ---
-        // Buscamos precio PUA actual en DB. Si no existe, error o default.
-        // Ojo: Podrías buscar el PUA específico de cada año en el futuro loop, 
-        // pero por ahora tomaremos el PUA de la gestión de inicio.
+        // PUA
         $tarifaPUA = TarifaModel::where('codigo', 'PUA')
                         ->where('gestion', $ins->gestion_inicio)
                         ->first();
         
-        // Si no hay PUA específico para ese año, buscamos el "permanente" (gestion null)
+        
         if(!$tarifaPUA){
             $tarifaPUA = TarifaModel::where('codigo', 'PUA')->orderBy('id_tarifa', 'desc')->first();
         }
 
-        $montoPUA = $tarifaPUA ? $tarifaPUA->monto : 250; // Si es 0, ojo, revisar tarifas
+        $montoPUA = $tarifaPUA ? $tarifaPUA->monto : 250; 
 
         for ($y = 0; $y < $yearsCount; $y++) {
             $yearCalculado = $ins->gestion_inicio + $y;
             
             PagoModel::create([
                 'origen_id' => $ins->id_inscripcion,
-                'origen_type' => InscripcionModel::class, // 'App\Models\InscripcionModel'
+                'origen_type' => InscripcionModel::class, 
                 'id_estudiante' => $ins->id_estudiante,
                 
-                'fecha_vencimiento' => Carbon::create($yearCalculado, 2, 10), // Ej: Vence el 10 de Febrero
+                'fecha_vencimiento' => Carbon::create($yearCalculado, 2, 10), 
                 'fecha_pago' => null,
                 
                 'descripcion' => "PUA Gestión $yearCalculado",
@@ -181,16 +176,15 @@ class Inscripciones extends Component
             ]);
         }
 
-        // --- B. Generar Mensualidades o Anualidades del Plan ---
-        
+        //Mensual
         if ($plan->tipo_pago === 'mensual') {
-            // Generar N cuotas mensuales
+            
             for ($i = 0; $i < $totalMonths; $i++) {
                 $yearOffset = intdiv($i, 12);
                 $mes = ($i % 12) + 1;
                 $anio = $ins->gestion_inicio + $yearOffset;
                 
-                // Nombre del mes en español (opcional)
+                
                 $nombreMes = $this->getNombreMes($mes);
 
                 PagoModel::create([
@@ -198,7 +192,7 @@ class Inscripciones extends Component
                     'origen_type' => InscripcionModel::class,
                     'id_estudiante' => $ins->id_estudiante,
                     
-                    // Vence el 10 de cada mes
+                    
                     'fecha_vencimiento' => Carbon::create($anio, $mes, 28), 
                     'fecha_pago' => null,
                     
@@ -210,7 +204,7 @@ class Inscripciones extends Component
             }
 
         } elseif ($plan->tipo_pago === 'anual') {
-            // Generar N cuotas anuales (1 por año)
+            
             for ($y = 0; $y < $yearsCount; $y++) {
                 $anio = $ins->gestion_inicio + $y;
 
@@ -219,7 +213,7 @@ class Inscripciones extends Component
                     'origen_type' => InscripcionModel::class,
                     'id_estudiante' => $ins->id_estudiante,
                     
-                    // Vence a inicio de gestión (ej: Marzo)
+                    
                     'fecha_vencimiento' => Carbon::create($anio, 3, 10), 
                     'fecha_pago' => null,
                     
@@ -229,6 +223,25 @@ class Inscripciones extends Component
                     'estado' => 'pendiente',
                 ]);
             }
+        } elseif ($plan->tipo_pago === 'unico') {
+            
+            // --- NUEVO: PLAN AL CONTADO ---
+            // Le damos exactamente 3 meses desde la fecha de inscripción para pagar la totalidad
+            $fechaVencimiento = Carbon::parse($ins->fecha_inscripcion)->addMonths(3);
+
+            PagoModel::create([
+                'origen_id' => $ins->id_inscripcion,
+                'origen_type' => InscripcionModel::class,
+                'id_estudiante' => $ins->id_estudiante,
+                
+                'fecha_vencimiento' => $fechaVencimiento, 
+                'fecha_pago' => null,
+                
+                'descripcion' => "Pago Único al Contado (Plan de $yearsCount Años)",
+                'monto_total' => $plan->costo_total, // Aquí entra el precio con descuento o el calculado
+                'monto_abonado' => 0,
+                'estado' => 'pendiente',
+            ]);
         }
     }
 
@@ -268,7 +281,7 @@ class Inscripciones extends Component
         if ($ins) {
             $ins->estado = $nuevoEstado;
             $ins->save();
-            // Opcional: Podrías cancelar las deudas pendientes si se retira
+            
         }
     }
 

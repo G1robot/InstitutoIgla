@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IGLA - ERP</title>
 
+    <link rel="icon" type="image/png" href="{{ asset('img/logo1.png') }}">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://unpkg.com/flowbite@2.3.0/dist/flowbite.min.js"></script>
@@ -29,12 +31,12 @@
     <nav class="fixed top-0 z-50 w-full bg-gray-900 shadow-lg border-b border-gray-800 h-16">
         <div class="px-5 h-full flex justify-between items-center">
 
-            <div class="flex items-center gap-3">
+            <a href="{{ route('home') }}" class="flex items-center gap-3">
                 <div class="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center shadow-md">
                     <i class="fa-solid fa-utensils text-white text-sm"></i>
                 </div>
                 <span class="font-black tracking-widest text-white text-xl">IGLA<span class="text-orange-500">POS</span></span>
-            </div>
+            </a>
 
             @auth('web')
             <div class="relative">
@@ -79,9 +81,9 @@
     <aside class="fixed top-0 left-0 w-64 h-screen bg-white border-r border-gray-200 pt-16 shadow-sm z-40">
         <div class="h-full overflow-y-auto no-scrollbar px-3 py-6">
 
-            <div class="text-center mb-8 px-4 mt-2">
-                <img src="/img/LOGO_POTOSI_01.png" alt="Logo IGLA" class="w-full max-w-[150px] mx-auto drop-shadow-sm transition-transform hover:scale-105">
-            </div>
+            <a href="{{ route('home') }}" class="block text-center mb-8 px-4 mt-2 transition-transform hover:scale-105">
+                <img src="/img/LOGO_POTOSI_01.png" alt="Logo IGLA" class="w-full max-w-[150px] mx-auto drop-shadow-sm">
+            </a>
 
             <ul class="space-y-1 text-sm font-medium">
 
@@ -103,6 +105,12 @@
                     <a href="{{ route('egresos') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all {{ request()->routeIs('egresos') ? 'bg-orange-50 text-orange-600 font-bold border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50 hover:text-orange-500' }}">
                         <i class="fa-solid fa-money-check-dollar w-5 text-center {{ request()->routeIs('egresos') ? 'text-orange-500' : 'text-gray-400' }}"></i>
                         <span>Registro de Egresos</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('otros-ingresos') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all {{ request()->routeIs('otros-ingresos') ? 'bg-orange-50 text-orange-600 font-bold border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50 hover:text-orange-500' }}">
+                        <i class="fa-solid fa-hand-holding-dollar w-5 text-center {{ request()->routeIs('otros-ingresos') ? 'text-orange-500' : 'text-gray-400' }}"></i>
+                        <span>Otros Ingresos</span>
                     </a>
                 </li>
 
@@ -215,6 +223,16 @@
                         <li>
                             <a href="{{ route('reporte-arqueo') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('reporte-arqueo') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
                                 <i class="fa-solid fa-file-invoice mr-2 text-xs opacity-50"></i> Arqueo Diario
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('reporte-ingresos') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('reporte-ingresos') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
+                                <i class="fa-solid fa-file-invoice mr-2 text-xs opacity-50"></i> Reporte de Ingresos
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('reporte-egresos') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('reporte-egresos') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
+                                <i class="fa-solid fa-file-invoice mr-2 text-xs opacity-50"></i> Reporte de Egresos
                             </a>
                         </li>
                     </ul>

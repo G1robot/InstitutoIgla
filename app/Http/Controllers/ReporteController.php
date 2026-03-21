@@ -10,4 +10,14 @@ class ReporteController extends Controller
     {
         return view('reportes.arqueo');
     }
+
+    public function ingresos()
+    {
+        return view('reportes.ingresos');
+    }
+
+    public function egresos()
+    {
+        return view('reportes.egresos');
+    }
 }

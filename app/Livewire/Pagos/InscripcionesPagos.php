@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\CajaModel;
 use Illuminate\Support\Facades\Auth;
 use Livewire\WithPagination;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InscripcionesPagos extends Component
 {
@@ -36,6 +37,12 @@ class InscripcionesPagos extends Component
     public $metodosPago = [];
     public $montos = [];
     public $totalIngresado = 0;
+
+    public $efectivoRecibido = null; 
+    public $cambio = 0;
+
+    ///CAMBIO FECHA
+    public $fechaPagoManual = null;
 
     protected $listeners = ['refreshComponent' => '$refresh'];
 
@@ -84,9 +91,24 @@ class InscripcionesPagos extends Component
     public function resetMontos() {
         $this->montos = [];
         foreach($this->metodosPago as $m) {
-            $this->montos[$m->id_metodo_pago] = 0; // Ej: [1 => 0, 2 => 0]
+            $this->montos[$m->id_metodo_pago] = 0;
         }
         $this->totalIngresado = 0;
+        $this->efectivoRecibido = null;
+        $this->cambio = 0;
+        ///CAMBIO FECHA
+        $this->fechaPagoManual = Carbon::now()->format('Y-m-d');
+    }
+
+    public function updatedEfectivoRecibido() {
+        $recibido = (float) ($this->efectivoRecibido === '' ? 0 : $this->efectivoRecibido);
+        $totalAPagar = $this->totalIngresado;
+
+        if ($recibido > $totalAPagar && $totalAPagar > 0) {
+            $this->cambio = $recibido - $totalAPagar;
+        } else {
+            $this->cambio = 0;
+        }
     }
 
     public function updatedMontos() {
@@ -140,9 +162,14 @@ class InscripcionesPagos extends Component
                             ->where('estado', 'abierta')
                             ->first();
 
+        ///CAMBIO FECHA
+        $fechaAUsar = $this->fechaPagoManual 
+                      ? Carbon::parse($this->fechaPagoManual)->setTime(12, 0, 0) 
+                      : Carbon::now();
+        
         $metodosUsados = [];
 
-        DB::transaction(function () use ($cajaAbierta, &$metodosUsados) {
+        DB::transaction(function () use ($cajaAbierta, &$metodosUsados, $fechaAUsar) {
             foreach ($this->montos as $idMetodo => $monto) {
                 $montoReal = (float) ($monto === '' ? 0 : $monto);
 
@@ -152,7 +179,8 @@ class InscripcionesPagos extends Component
                         'id_metodo_pago' => $idMetodo,
                         'id_caja' => $cajaAbierta->id_caja,
                         'monto' => $montoReal,
-                        'fecha_transaccion' => Carbon::now()
+                        //Carbon::now()
+                        'fecha_transaccion' => $fechaAUsar,
                     ]);
                     
                     // Guardar nombre del método para el recibo
@@ -167,7 +195,8 @@ class InscripcionesPagos extends Component
             $this->pagoSeleccionado->update([
                 'monto_abonado' => $nuevoAbonado,
                 'estado' => $nuevoEstado,
-                'fecha_pago' => Carbon::now() 
+                //Carbon::now()
+                'fecha_pago' => $fechaAUsar 
             ]);
         });
 
@@ -177,13 +206,18 @@ class InscripcionesPagos extends Component
         
         $this->datosRecibo = [
             'nro_recibo' => str_pad($this->pagoSeleccionado->id_pago, 6, '0', STR_PAD_LEFT),
-            'fecha' => Carbon::now()->format('d/m/Y H:i'),
+            //Carbon::now()
+            'fecha' => $fechaAUsar->format('d/m/Y H:i'),
             'estudiante' => $inscripcion->estudiante->nombre . ' ' . $inscripcion->estudiante->apellido,
             'ci' => $inscripcion->estudiante->ci,
             'cajero' => Auth::user()->nombre ?? 'Caja',
             'plan' => $inscripcion->plan->nombre,
             'cuota' => $this->pagoSeleccionado->descripcion,
-            'monto_pagado' => $this->totalIngresado, // Lo que pagó AHORA
+            'monto_pagado' => $this->totalIngresado,
+
+            'ingresado' => $this->efectivoRecibido ?: $this->totalIngresado,
+            'cambio' => $this->cambio,
+
             'metodos' => implode(', ', $metodosUsados),
             'estado_cuota' => ($this->pagoSeleccionado->monto_abonado + $this->totalIngresado) >= $this->pagoSeleccionado->monto_total ? 'CANCELADO TOTAL' : 'ABONO A CUENTA',
             'saldo_restante' => max(0, $this->pagoSeleccionado->monto_total - ($this->pagoSeleccionado->monto_abonado + $this->totalIngresado))
@@ -411,8 +445,22 @@ class InscripcionesPagos extends Component
         $this->pagoSeleccionado = PagoModel::find($this->pagoSeleccionado->id_pago);
     }
 
+    public function descargarReciboPdf()
+    {
+        if (!$this->datosRecibo) {
+            return;
+        }
 
+        $pdf = Pdf::loadView('livewire.pagos.pdf.recibo-pdf', [
+            'datosRecibo' => $this->datosRecibo
+        ]);
 
+        $pdf->setPaper('letter', 'portrait');
 
+        $nombreArchivo = 'Recibo_IGLA_Nro_' . $this->datosRecibo['nro_recibo'] . '.pdf';
 
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $nombreArchivo);
+    }
 }

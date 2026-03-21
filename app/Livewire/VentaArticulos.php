@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\CajaModel;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class VentaArticulos extends Component
@@ -330,13 +331,29 @@ class VentaArticulos extends Component
             // 3. Anular el Pago asociado (Esto evitará que sume en el Arqueo)
             if ($venta->pago) {
                 $venta->pago->update(['estado' => 'anulado']);
-                // Opcional: Podrías borrar las transacciones si prefieres que desaparezcan del todo
-                // $venta->pago->transacciones()->delete(); 
-                // Pero mejor dejarlas y filtrar por estado 'anulado' en el arqueo para auditoría.
             }
         });
 
         $this->cargarVentasDelDia(); // Refrescar lista
         session()->flash('mensaje_historial', "Venta #$idVenta anulada y stock restaurado.");
+    }
+
+    public function descargarReciboPdf()
+    {
+        if (!$this->datosRecibo) {
+            return;
+        }
+
+        $pdf = Pdf::loadView('livewire.pdf.venta-recibo-pdf', [
+            'datosRecibo' => $this->datosRecibo
+        ]);
+
+        $pdf->setPaper('letter', 'portrait');
+
+        $nombreArchivo = 'Recibo_IGLA_Nro_' . $this->datosRecibo['nro_recibo'] . '.pdf';
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $nombreArchivo);
     }
 }

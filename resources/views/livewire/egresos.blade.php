@@ -266,6 +266,12 @@
                     <button onclick="window.print()" class="bg-gray-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition w-full flex items-center justify-center gap-2 shadow-lg">
                         <i class="fa-solid fa-print"></i> Imprimir Comprobante
                     </button>
+
+                    <button wire:click="descargarReciboPdf" wire:loading.attr="disabled" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition w-full flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
+                        <span wire:loading.remove wire:target="descargarReciboPdf"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</span>
+                        <span wire:loading wire:target="descargarReciboPdf"><i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...</span>
+                    </button>
+
                     <button wire:click="cerrarModalExito" class="bg-red-50 text-red-600 px-6 py-3 rounded-xl font-bold hover:bg-red-100 transition w-full">
                         Nuevo Egreso
                     </button>
@@ -283,10 +289,18 @@
     <div class="zona-impresion bg-white">
         
         {{-- 1. Cabecera del Instituto (Compacta) --}}
-        <div class="text-center mb-3 border-b-2 border-dashed border-gray-400 pb-2">
-            <h1 class="font-black text-2xl uppercase tracking-widest leading-none mb-1">IGLA POTOSÍ</h1>
-            {{-- <p class="text-sm font-bold">Instituto Técnico Gastronómico</p> --}}
-            <p class="text-xs text-gray-600 mt-1">Telfs 74289575 &nbsp;|&nbsp; Calle Tarija #30, Potosí - Bolivia</p>
+        <div class="flex items-center justify-between mb-3 border-b-2 border-dashed border-gray-400 pb-2">
+            {{-- Lado Izquierdo: LOGO --}}
+            <div class="w-1/4">
+                <img src="{{ asset('img/LOGO_POTOSI_01.png') }}" alt="Logo IGLA" class="max-h-16 object-contain grayscale" style="filter: grayscale(100%);">
+            </div>
+            
+            {{-- Lado Derecho: Textos --}}
+            <div class="w-3/4 text-right">
+                <h1 class="font-black text-2xl uppercase tracking-widest leading-none mb-1">IGLA POTOSÍ</h1>
+                <p class="text-xs text-gray-600 font-bold mt-1">Instituto Técnico Gastronómico</p>
+                <p class="text-[10px] text-gray-500 mt-0.5">Telfs 74289575 &nbsp;|&nbsp; Calle Tarija #30, Potosí</p>
+            </div>
         </div>
 
         {{-- 2. Título y Número --}}

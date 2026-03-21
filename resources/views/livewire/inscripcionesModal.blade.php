@@ -42,7 +42,7 @@
                     @if(!empty($estudiantes_encontrados))
                         <ul class="absolute z-50 w-full bg-white border border-orange-300 rounded-lg mt-1 shadow-2xl max-h-48 overflow-auto divide-y divide-gray-100 animate-fade-in-down">
                             @foreach($estudiantes_encontrados as $e)
-                                <li wire:click="seleccionarEstudiante({{ $e->id_estudiante }})" 
+                                <li wire:key="search-est-{{ $e->id_estudiante }}" wire:click="seleccionarEstudiante({{ $e->id_estudiante }})" 
                                     class="p-3 cursor-pointer hover:bg-orange-50 transition flex items-center gap-3 text-sm">
                                     <i class="fa-solid fa-chevron-right text-orange-400 text-xs"></i>
                                     <div>

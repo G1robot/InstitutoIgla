@@ -59,8 +59,8 @@
                         @if(!empty($estudiantesEncontrados))
                             <ul class="absolute w-full left-0 bg-white shadow-2xl border border-orange-200 mt-1 rounded-lg overflow-hidden z-50 animate-fade-in-down divide-y divide-gray-100">
                                 @foreach($estudiantesEncontrados as $est)
-                                    <li wire:click="seleccionarEstudiante({{ $est->id_estudiante }})" 
-                                        class="p-3 hover:bg-orange-50 cursor-pointer flex items-center gap-3 transition">
+                                    <li wire:key="search-est-{{ $est->id_estudiante }}" wire:click="seleccionarEstudiante({{ $est->id_estudiante }})" 
+                                        class="p-3 cursor-pointer hover:bg-orange-50 transition flex items-center gap-3 text-sm">
                                         <i class="fa-solid fa-chevron-right text-orange-400 text-xs"></i>
                                         <div>
                                             <span class="font-bold text-gray-800">{{ $est->nombre }} {{ $est->apellido }}</span>
@@ -244,6 +244,11 @@
                 <button onclick="window.print()" class="bg-gray-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition w-full flex items-center justify-center gap-2 shadow-lg">
                     <i class="fa-solid fa-print"></i> Imprimir Comprobante
                 </button>
+
+                <button wire:click="descargarReciboPdf" wire:loading.attr="disabled" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition w-full flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
+                    <span wire:loading.remove wire:target="descargarReciboPdf"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</span>
+                    <span wire:loading wire:target="descargarReciboPdf"><i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...</span>
+                </button>
                 
                 <button wire:click="cerrarModalExito" class="bg-green-50 text-green-700 px-6 py-3 rounded-xl font-bold hover:bg-green-100 transition w-full">
                     Nueva Inscripción
@@ -260,10 +265,18 @@
     <div class="zona-impresion bg-white">
         
         {{-- 1. Cabecera del Instituto (Compacta) --}}
-        <div class="text-center mb-3 border-b-2 border-dashed border-gray-400 pb-2">
-            <h1 class="font-black text-2xl uppercase tracking-widest leading-none mb-1">IGLA POTOSÍ</h1>
-            {{-- <p class="text-sm font-bold">Instituto Técnico Gastronómico</p> --}}
-            <p class="text-xs text-gray-600 mt-1">Telfs 74289575 &nbsp;|&nbsp; Calle Tarija #30, Potosí - Bolivia</p>
+        <div class="flex items-center justify-between mb-3 border-b-2 border-dashed border-gray-400 pb-2">
+            {{-- Lado Izquierdo: LOGO --}}
+            <div class="w-1/4">
+                <img src="{{ asset('img/LOGO_POTOSI_01.png') }}" alt="Logo IGLA" class="max-h-16 object-contain grayscale" style="filter: grayscale(100%);">
+            </div>
+            
+            {{-- Lado Derecho: Textos --}}
+            <div class="w-3/4 text-right">
+                <h1 class="font-black text-2xl uppercase tracking-widest leading-none mb-1">IGLA POTOSÍ</h1>
+                <p class="text-xs text-gray-600 font-bold mt-1">Instituto Técnico Gastronómico</p>
+                <p class="text-[10px] text-gray-500 mt-0.5">Telfs 74289575 &nbsp;|&nbsp; Calle Tarija #30, Potosí</p>
+            </div>
         </div>
 
         {{-- 2. Título y Número --}}

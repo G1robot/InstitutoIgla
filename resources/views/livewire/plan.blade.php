@@ -31,6 +31,7 @@
                         <th class="px-6 py-3 text-center font-bold text-gray-500 uppercase tracking-wider">Duración Total</th>
                         <th class="px-6 py-3 text-right font-bold text-gray-500 uppercase tracking-wider">Costo Anual</th>
                         <th class="px-6 py-3 text-right font-bold text-gray-500 uppercase tracking-wider">Costo Mensual</th>
+                        <th class="px-6 py-3 text-right font-bold text-gray-500 uppercase tracking-wider">Costo Total</th>
                         <th class="px-6 py-3 text-center font-bold text-gray-500 uppercase tracking-wider">Modalidad</th>
                         <th class="px-6 py-3 text-right font-bold text-gray-500 uppercase tracking-wider">Acción</th>
                     </tr>
@@ -79,9 +80,22 @@
                                 @endif
                             </td>
 
+                            {{-- Costo Total --}}
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                @if($item->costo_total)
+                                    <span class="font-black text-green-600">{{ number_format($item->costo_total, 2) }}</span> <span class="text-xs text-green-400">Bs</span>
+                                @else
+                                    <span class="text-gray-300">-</span>
+                                @endif
+                            </td>
+
                             {{-- Modalidad (Tipo de Pago) --}}
                             <td class="px-6 py-4 whitespace-nowrap text-center">
-                                @if(strtolower($item->tipo_pago) == 'anual')
+                                @if(strtolower($item->tipo_pago) == 'unico')
+                                    <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold border border-purple-200">
+                                        ÚNICO
+                                    </span>
+                                @elseif(strtolower($item->tipo_pago) == 'anual')
                                     <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold border border-blue-200">
                                         ANUAL
                                     </span>

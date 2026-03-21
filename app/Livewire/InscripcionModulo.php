@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\CajaModel;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InscripcionModulo extends Component
 {
@@ -324,5 +325,24 @@ class InscripcionModulo extends Component
     
     public function cerrarModalExito() {
         $this->showModalExito = false;
+    }
+
+    public function descargarReciboPdf()
+    {
+        if (!$this->datosRecibo) {
+            return;
+        }
+
+        $pdf = Pdf::loadView('livewire.pdf.modulo-recibo-pdf', [
+            'datosRecibo' => $this->datosRecibo
+        ]);
+
+        $pdf->setPaper('letter', 'portrait');
+
+        $nombreArchivo = 'Recibo_IGLA_Nro_' . $this->datosRecibo['nro_recibo'] . '.pdf';
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $nombreArchivo);
     }
 }
