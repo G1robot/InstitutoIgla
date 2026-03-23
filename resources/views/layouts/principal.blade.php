@@ -225,6 +225,7 @@
                                 <i class="fa-solid fa-file-invoice mr-2 text-xs opacity-50"></i> Arqueo Diario
                             </a>
                         </li>
+                        @if(Auth::user()->rol === 'administrador')
                         <li>
                             <a href="{{ route('reporte-ingresos') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('reporte-ingresos') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
                                 <i class="fa-solid fa-file-invoice mr-2 text-xs opacity-50"></i> Reporte de Ingresos
@@ -235,6 +236,7 @@
                                 <i class="fa-solid fa-file-invoice mr-2 text-xs opacity-50"></i> Reporte de Egresos
                             </a>
                         </li>
+                        @endif 
                     </ul>
                 </li>
             </ul>
