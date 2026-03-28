@@ -42,4 +42,5 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/reporte-egresos',[ReporteController::class,'egresos'])->name('reporte-egresos');
     Route::get('/categorias-modulos',[CategoriasModulosController::class,'index'])->name('categorias-modulos');
     Route::get('/otros-ingresos',[OtrosIngresosController::class,'index'])->name('otros-ingresos');
+    Route::get('/reporte-adquisiciones',[ReporteController::class,'adquisiciones'])->name('reporte-adquisiciones');
 });

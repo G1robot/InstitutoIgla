@@ -3,9 +3,13 @@
 
         {{-- HEADER --}}
         <div class="mb-8">
-            <h2 class="text-2xl font-black text-gray-800 tracking-tight">INSCRIPCIÓN POR MÓDULOS</h2>
-            <p class="text-sm text-gray-500 mt-1">Registra a los estudiantes en módulos específicos y procesa sus pagos.</p>
+            <h2 class="text-2xl font-black text-gray-800 tracking-tight">INSCRIPCIÓN CURSOS DE CAPACITACIÓN</h2>
+            <p class="text-sm text-gray-500 mt-1">Registra a los estudiantes en módulos y procesa abonos parciales o totales.</p>
         </div>
+
+        @error('general') 
+            <div class="mb-4 bg-red-50 text-red-600 p-3 rounded-lg border border-red-200 font-bold"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div>
+        @enderror
 
         {{-- LAYOUT PRINCIPAL --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -13,7 +17,7 @@
             {{-- COLUMNA IZQUIERDA: CATÁLOGO --}}
             <div class="lg:col-span-2 flex flex-col gap-5">
 
-                {{-- 1. Buscador de Estudiante (UX Infalible) --}}
+                {{-- 1. Buscador de Estudiante --}}
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 relative z-20">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Cliente / Estudiante *</label>
                     
@@ -36,7 +40,7 @@
                                             <span class="bg-red-100 text-red-700 text-[10px] font-black px-2 py-1 rounded border border-red-200 shadow-sm">
                                                 <i class="fas fa-exclamation-circle"></i> PUP PENDIENTE
                                             </span>
-                                            <span class="text-[10px] text-red-500 ml-1 italic font-bold">Se agregará al carrito</span>
+                                            <span class="text-[10px] text-red-500 ml-1 italic font-bold">Agregado al carrito</span>
                                         @endif
                                     </div>
                                 </div>
@@ -174,15 +178,15 @@
                     {{-- Sección de Pago --}}
                     <div class="p-5 bg-gray-50 border-t border-gray-200">
                         
-                        <div class="flex justify-between items-end mb-5">
-                            <span class="text-gray-500 font-bold text-sm uppercase tracking-wider">Total a Pagar</span>
-                            <span class="text-3xl font-black text-orange-600 leading-none">{{ number_format($total, 2) }} <span class="text-sm text-orange-400">Bs</span></span>
+                        <div class="flex justify-between items-end mb-5 border-b border-gray-200 pb-2">
+                            <span class="text-gray-500 font-bold text-sm uppercase tracking-wider">Costo de Módulos</span>
+                            <span class="text-2xl font-black text-gray-800 leading-none">{{ number_format($total, 2) }} <span class="text-sm text-gray-500">Bs</span></span>
                         </div>
 
                         {{-- INTERFAZ DE PAGO MÚLTIPLE --}}
                         @if($total > 0)
                             <div class="space-y-3 mb-5">
-                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-wider">Método de Pago</label>
+                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-wider">Abono Inicial (Puede ser 0)</label>
                                 
                                 @foreach($metodosPago as $metodo)
                                     <div class="flex shadow-sm rounded-lg overflow-hidden border border-gray-300 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white">
@@ -192,16 +196,22 @@
                                         <input type="number" step="0.50" wire:model.live="montosPago.{{ $metodo->id_metodo_pago }}" 
                                             class="flex-1 w-full px-3 py-2 border-none text-sm font-bold text-gray-800 focus:ring-0 bg-white" 
                                             placeholder="0.00">
-                                        <button wire:click="llenarSaldo({{ $metodo->id_metodo_pago }})" class="px-3 bg-white text-gray-400 hover:text-orange-500 transition border-l border-gray-200" title="Autocompletar saldo restante">
+                                        <button wire:click="llenarSaldo({{ $metodo->id_metodo_pago }})" class="px-3 bg-white text-gray-400 hover:text-orange-500 transition border-l border-gray-200" title="Pago Completo">
                                             <i class="fas fa-reply"></i>
                                         </button>
                                     </div>
                                 @endforeach
                                 
                                 <div class="flex justify-between text-xs pt-2 border-t border-gray-200 mt-2">
-                                    <span>Ingresado: <strong class="{{ $totalIngresado >= $total - 0.1 ? 'text-green-600' : 'text-red-500' }} font-mono text-sm">{{ number_format($totalIngresado, 2) }}</strong></span>
+                                    <span>Total Abonado: <strong class="text-green-600 font-mono text-sm">{{ number_format($totalIngresado, 2) }}</strong></span>
                                     <span>Cambio: <strong class="font-mono text-sm text-gray-800">{{ number_format(max(0, $totalIngresado - $total), 2) }}</strong></span>
                                 </div>
+                                @if($totalIngresado < $total)
+                                    <div class="text-right text-xs mt-1">
+                                        <span class="text-red-500 font-bold">Deuda Generada: {{ number_format($total - $totalIngresado, 2) }} Bs</span>
+                                    </div>
+                                @endif
+                                
                                 @error('pago') 
                                     <span class="text-red-500 text-xs block font-bold mt-1"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</span> 
                                 @enderror
@@ -210,8 +220,7 @@
                             <button wire:click="finalizarInscripcion" 
                                 wire:loading.attr="disabled"
                                 wire:target="finalizarInscripcion"
-                                class="w-full bg-gray-800 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-black transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                {{ $totalIngresado < $total - 0.1 ? 'disabled' : '' }}>
+                                class="w-full bg-gray-800 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-black transition-all flex items-center justify-center gap-2">
                                 <span wire:loading.remove wire:target="finalizarInscripcion"><i class="fa-solid fa-check-circle"></i> Confirmar Inscripción</span>
                                 <span wire:loading wire:target="finalizarInscripcion"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
                             </button>
@@ -238,7 +247,7 @@
                 <i class="fas fa-check text-4xl"></i>
             </div>
             <h3 class="text-2xl font-black text-gray-800 mb-2">¡Inscripción Exitosa!</h3>
-            <p class="text-gray-500 mb-8 text-sm">Se han registrado los módulos y los pagos correctamente en el sistema.</p>
+            <p class="text-gray-500 mb-8 text-sm">Se han registrado los módulos y los saldos correctamente en el sistema.</p>
             
             <div class="flex flex-col gap-3">
                 <button onclick="window.print()" class="bg-gray-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition w-full flex items-center justify-center gap-2 shadow-lg">
@@ -259,19 +268,15 @@
     @endif
 
     {{-- ========================================== --}}
-    {{-- RECIBO DE INSCRIPCIÓN (DISEÑO COMPACTO)    --}}
+    {{-- RECIBO DE INSCRIPCIÓN (CON SALDO PENDIENTE) --}}
     {{-- ========================================== --}}
     @if($datosRecibo)
     <div class="zona-impresion bg-white">
         
-        {{-- 1. Cabecera del Instituto (Compacta) --}}
         <div class="flex items-center justify-between mb-3 border-b-2 border-dashed border-gray-400 pb-2">
-            {{-- Lado Izquierdo: LOGO --}}
             <div class="w-1/4">
                 <img src="{{ asset('img/LOGO_POTOSI_01.png') }}" alt="Logo IGLA" class="max-h-16 object-contain grayscale" style="filter: grayscale(100%);">
             </div>
-            
-            {{-- Lado Derecho: Textos --}}
             <div class="w-3/4 text-right">
                 <h1 class="font-black text-2xl uppercase tracking-widest leading-none mb-1">IGLA POTOSÍ</h1>
                 <p class="text-xs text-gray-600 font-bold mt-1">Instituto Técnico Gastronómico</p>
@@ -279,26 +284,23 @@
             </div>
         </div>
 
-        {{-- 2. Título y Número --}}
         <div class="flex justify-between items-end mb-4 border-b border-gray-800 pb-1">
-            <h2 class="font-bold text-lg uppercase tracking-wide">Comprobante de Inscripción</h2>
+            <h2 class="font-bold text-lg uppercase tracking-wide">Comprobante de Inscripción / Abono</h2>
             <p class="text-sm">Nro: <span class="font-bold text-lg">{{ $datosRecibo['nro_recibo'] }}</span></p>
         </div>
 
-        {{-- 3. Datos a los extremos (Izquierda: Estudiante | Derecha: Cajero) --}}
         <div class="flex justify-between mb-4 text-sm bg-gray-50 p-2 rounded-lg border border-gray-100">
             <div class="text-left w-1/2 pr-2">
-                <p><span class="text-gray-500 uppercase text-[10px] font-bold inline-block mr-1">Estudiante:</span> {{ $datosRecibo['estudiante'] }}</p>
-                <p><span class="text-gray-500 uppercase text-[10px] font-bold inline-block mr-1">CI:</span> {{ $datosRecibo['ci'] }}</p>
+                <p><span class="text-gray-500 uppercase text-[10px] font-bold mr-1">Estudiante:</span> {{ $datosRecibo['estudiante'] }}</p>
+                <p><span class="text-gray-500 uppercase text-[10px] font-bold mr-1">CI:</span> {{ $datosRecibo['ci'] }}</p>
             </div>
             
             <div class="text-right w-1/2 pl-2">
-                <p><span class="text-gray-500 uppercase text-[10px] font-bold inline-block mr-1">Fecha de emisión:</span> {{ $datosRecibo['fecha'] }}</p>
-                <p><span class="text-gray-500 uppercase text-[10px] font-bold inline-block mr-1">Cajero(a):</span> {{ $datosRecibo['cajero'] }}</p>
+                <p><span class="text-gray-500 uppercase text-[10px] font-bold mr-1">Fecha:</span> {{ $datosRecibo['fecha'] }}</p>
+                <p><span class="text-gray-500 uppercase text-[10px] font-bold mr-1">Cajero:</span> {{ $datosRecibo['cajero'] }}</p>
             </div>
         </div>
 
-        {{-- 4. Detalle de Compra (Tabla más ajustada) --}}
         <table class="w-full text-sm mb-4">
             <thead>
                 <tr class="border-b-2 border-gray-800">
@@ -319,25 +321,30 @@
             </tbody>
         </table>
 
-        {{-- 5. Totales --}}
+        {{-- Totales con Deuda --}}
         <div class="flex justify-end mb-6">
             <div class="w-3/4 sm:w-1/2 text-sm">
                 <div class="flex justify-between font-black text-lg border-t-2 border-gray-800 pt-1.5">
-                    <span>TOTAL Bs:</span>
+                    <span>COSTO TOTAL Bs:</span>
                     <span>{{ number_format($datosRecibo['total'], 2) }}</span>
                 </div>
-                <div class="flex justify-between text-gray-600 mt-1">
-                    <span>Efectivo/Ingresado:</span>
+                <div class="flex justify-between text-green-700 font-bold mt-1">
+                    <span>Abono Efectuado:</span>
                     <span>{{ number_format($datosRecibo['ingresado'], 2) }}</span>
                 </div>
-                <div class="flex justify-between text-gray-600">
+                @if($datosRecibo['saldo'] > 0)
+                <div class="flex justify-between text-red-600 font-black mt-1 border-t border-dashed border-red-200 pt-1">
+                    <span>SALDO PENDIENTE Bs:</span>
+                    <span>{{ number_format($datosRecibo['saldo'], 2) }}</span>
+                </div>
+                @endif
+                <div class="flex justify-between text-gray-500 text-xs mt-1">
                     <span>Cambio:</span>
                     <span>{{ number_format($datosRecibo['cambio'], 2) }}</span>
                 </div>
             </div>
         </div>
 
-        {{-- 6. Mensaje Final --}}
         <div class="text-center text-[11px] text-gray-500 border-t border-gray-300 pt-3">
             <p>Conserve este comprobante para cualquier reclamo.</p>
             <p class="font-bold text-gray-800 mt-0.5">¡Gracias por ser parte de IGLA!</p>
@@ -346,41 +353,19 @@
     </div>
     @endif
 
-    {{-- ========================================== --}}
-    {{-- CSS MÁGICO PARA IMPRESIÓN                  --}}
-    {{-- ========================================== --}}
     <style>
         .zona-impresion { display: none; }
-
         @media print {
             nav, aside, .ocultar-al-imprimir, .no-imprimir { display: none !important; }
-
             @page { margin: 0 !important; size: auto; }
-            
             body, html { margin: 0 !important; padding: 0 !important; background-color: white !important; }
-
-            main, main > div, .container, .px-4 {
-                margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important;
-                border-radius: 0 !important; background: white !important; max-width: 100% !important;
-            }
-
-            /* Habilitar Flexbox en la impresora */
+            main, main > div, .container, .px-4 { margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; background: white !important; max-width: 100% !important; }
             .zona-impresion .flex { display: flex !important; }
-
-            .zona-impresion {
-                display: block !important; position: absolute !important; top: 0 !important; left: 0 !important;
-                width: 100% !important; max-width: 100% !important;
-                padding: 1cm 1.5cm !important; /* PADDING REDUCIDO PARA COMPACTAR */
-                border: none !important; box-shadow: none !important;
-                background: transparent !important; border-radius: 0 !important; color: black !important;
-            }
-
+            .zona-impresion { display: block !important; position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; max-width: 100% !important; padding: 1cm 1.5cm !important; border: none !important; box-shadow: none !important; background: transparent !important; border-radius: 0 !important; color: black !important; }
             .zona-impresion * { color: black !important; font-family: Arial, Helvetica, sans-serif !important; background: transparent !important; }
-            
             .zona-impresion p, .zona-impresion td, .zona-impresion th, .zona-impresion span, .zona-impresion div { font-size: 11pt !important; line-height: 1.3 !important; }
             .zona-impresion h1 { font-size: 16pt !important; margin-bottom: 2px !important; }
             .zona-impresion h2 { font-size: 13pt !important; margin-bottom: 0 !important; text-transform: uppercase !important; }
-
             .zona-impresion table { width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; border: none !important; }
             .zona-impresion th, .zona-impresion td { border: none !important; border-bottom: 1px dashed #ccc !important; padding: 4px 0 !important; }
             .zona-impresion thead th { border-bottom: 2px solid black !important; }

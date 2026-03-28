@@ -208,8 +208,8 @@ class InscripcionModulo extends Component
     {
         if (empty($this->carrito)) return;
 
-        if ($this->totalIngresado < $this->total - 0.1) {
-            $this->addError('pago', 'El monto ingresado no cubre el total a pagar.');
+        if ($this->totalIngresado > $this->total + 100) {
+            $this->addError('pago', 'El monto ingresado es excesivamente mayor al total.');
             return;
         }
 
@@ -217,10 +217,8 @@ class InscripcionModulo extends Component
                             ->where('estado', 'abierta')
                             ->first();
 
-        // 1. Creamos la variable afuera para atrapar el ID real
         $ultimoPagoId = null;
 
-        // 2. Le pasamos &$ultimoPagoId a la transacción para poder modificarla desde adentro
         DB::transaction(function () use ($cajaAbierta, &$ultimoPagoId) {
             
             $bolsaDinero = [];
@@ -237,11 +235,11 @@ class InscripcionModulo extends Component
                         'origen_type' => 'App\Models\TarifaModel',
                         'id_estudiante' => $this->estudianteSeleccionado->id_estudiante,
                         'fecha_vencimiento' => Carbon::now(),
-                        'fecha_pago' => Carbon::now(),
+                        'fecha_pago' => null,
                         'descripcion' => 'Pago Único Permanente (PUP)',
                         'monto_total' => $item['precio'],
-                        'monto_abonado' => $item['precio'],
-                        'estado' => 'pagado'
+                        'monto_abonado' => 0,
+                        'estado' => 'pendiente'
                     ]);
 
                     EstudianteDerechoModel::create([
@@ -265,22 +263,19 @@ class InscripcionModulo extends Component
                         'origen_id' => $inscripcion->id_inscripcion_modulo,
                         'origen_type' => InscripcionModuloModel::class,
                         'id_estudiante' => $this->estudianteSeleccionado->id_estudiante,
-                        'fecha_vencimiento' => Carbon::now(),
-                        'fecha_pago' => Carbon::now(),
+                        'fecha_vencimiento' => Carbon::now()->addDays(15),
+                        'fecha_pago' => null,
                         'descripcion' => 'Módulo: ' . $item['nombre'],
                         'monto_total' => $item['precio'],
-                        'monto_abonado' => $item['precio'],
-                        'estado' => 'pagado'
+                        'monto_abonado' => 0,
+                        'estado' => 'pendiente'
                     ]);
                 }
 
-                // Si se generó un pago en la base de datos...
                 if ($pagoCreado) {
-                    
-                    // 3. ¡ATRAPAMOS EL ID AQUÍ!
                     $ultimoPagoId = $pagoCreado->id_pago; 
-
                     $costoItem = $item['precio'];
+                    $abonadoAEsteItem = 0;
                     
                     foreach ($bolsaDinero as $idMetodo => &$saldoDisponible) {
                         if ($costoItem <= 0) break; 
@@ -298,12 +293,28 @@ class InscripcionModulo extends Component
 
                         $saldoDisponible -= $montoUsar;
                         $costoItem -= $montoUsar;
+                        $abonadoAEsteItem += $montoUsar;
+                    }
+
+                    // 3. ACTUALIZAMOS EL ESTADO DEL PAGO SEGÚN EL ABONO
+                    if ($abonadoAEsteItem > 0) {
+                        $pagoCreado->monto_abonado = $abonadoAEsteItem;
+                        $pagoCreado->fecha_pago = Carbon::now();
+                        
+                        if ($abonadoAEsteItem >= $item['precio'] - 0.1) {
+                            $pagoCreado->estado = 'pagado';
+                        } else {
+                            $pagoCreado->estado = 'parcial';
+                        }
+                        $pagoCreado->save();
                     }
                 }
             }
         });
 
         // 4. USAMOS EL ID REAL PARA EL RECIBO ($ultimoPagoId)
+        $saldoPendiente = max(0, $this->total - $this->totalIngresado);
+
         $this->datosRecibo = [
             'nro_recibo' => str_pad($ultimoPagoId ?? 0, 6, '0', STR_PAD_LEFT),
             'estudiante' => $this->estudianteSeleccionado->nombre . ' ' . $this->estudianteSeleccionado->apellido,
@@ -312,7 +323,8 @@ class InscripcionModulo extends Component
             'cajero' => Auth::user()->nombre ?? 'Administrador',
             'items' => $this->carrito,
             'total' => $this->total,
-            'ingresado' => $this->totalIngresado,
+            'ingresado' => min($this->totalIngresado, $this->total),
+            'saldo' => $saldoPendiente,
             'cambio' => max(0, $this->totalIngresado - $this->total),
         ];
         

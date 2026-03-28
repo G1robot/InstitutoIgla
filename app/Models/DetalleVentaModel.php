@@ -16,8 +16,13 @@ class DetalleVentaModel extends Model
         'subtotal'
     ];
 
+    public function venta()
+    {
+        return $this->belongsTo(VentaModel::class, 'id_venta', 'id_venta');
+    }
+
     public function articulo()
     {
-        return $this->belongsTo(ArticuloModel::class, 'id_articulo');
+        return $this->belongsTo(ArticuloModel::class, 'id_articulo', 'id_articulo');
     }
 }

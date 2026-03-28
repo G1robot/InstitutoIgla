@@ -50,8 +50,8 @@
                             <option value="">Seleccione...</option>
                             <option value="anual">Cobro Anual (Ej: Plan Ahorro 3 cuotas)</option>
                             <option value="mensual">Cobro Mensual (Ej: Plan Regular)</option>
-                            {{-- NUEVA OPCIÓN AÑADIDA AQUÍ --}}
                             <option value="unico">Pago Único (Ej: Plan al Contado)</option>
+                            <option value="beca">Beca (Solo PUA, sin cuotas académicas)</option>
                         </select>
                         @error('tipo_pago') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                     </div>

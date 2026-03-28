@@ -86,6 +86,11 @@
                             {{-- Acciones Rápidas (Iconos en vez de botones gigantes) --}}
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 <div class="flex justify-center gap-2">
+                                    {{-- Botón Cambiar Turno --}}
+                                    <button wire:click="abrirModalTurno({{ $i->id_inscripcion }})" 
+                                        class="bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white px-3 py-1.5 rounded-lg transition border border-orange-100 shadow-sm text-xs font-bold" title="Cambiar Turno">
+                                        <i class="fa-solid fa-clock-rotate-left"></i>
+                                    </button>
                                     @if($i->estado === 'activo')
                                         <button wire:click="retirar({{ $i->id_inscripcion }})" 
                                             onclick="confirm('¿Estás seguro de marcar a este estudiante como Retirado?') || event.stopImmediatePropagation()"
@@ -130,6 +135,45 @@
 
     @if($showModal)
         @include('livewire.inscripcionesModal')
+    @endif
+    {{-- MODAL CAMBIAR TURNO --}}
+    @if($showModalTurno)
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in-down">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border-t-4 border-orange-500">
+            
+            {{-- Cabecera del Modal --}}
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-orange-50">
+                <h3 class="font-black text-orange-800 text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-orange-500"></i> Cambiar Turno
+                </h3>
+                <button wire:click="cerrarModalTurno" class="text-orange-400 hover:text-orange-700 text-xl transition">&times;</button>
+            </div>
+            
+            {{-- Cuerpo del Modal --}}
+            <div class="p-6">
+                <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Seleccione el Nuevo Turno</label>
+                <select wire:model="nuevo_id_turno" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-shadow text-gray-700 font-bold bg-gray-50">
+                    <option value="">Seleccione...</option>
+                    @foreach($turnos as $t)
+                        <option value="{{ $t->id_turno }}">{{ $t->nombre }}</option>
+                    @endforeach
+                </select>
+                @error('nuevo_id_turno') <span class="text-red-500 text-xs mt-1 block"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</span> @enderror
+            </div>
+            
+            {{-- Pie del Modal (Botones) --}}
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                <button wire:click="cerrarModalTurno" class="px-4 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                    Cancelar
+                </button>
+                <button wire:click="actualizarTurno" wire:loading.attr="disabled" wire:target="actualizarTurno" class="px-4 py-2 text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-lg shadow-md flex items-center gap-2 transition">
+                    <span wire:loading.remove wire:target="actualizarTurno"><i class="fa-solid fa-save"></i> Guardar Cambio</span>
+                    <span wire:loading wire:target="actualizarTurno"><i class="fa-solid fa-spinner fa-spin"></i> Guardando...</span>
+                </button>
+            </div>
+            
+        </div>
+    </div>
     @endif
 
 </div>

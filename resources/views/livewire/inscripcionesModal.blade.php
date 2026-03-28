@@ -100,20 +100,37 @@
                     @error('anio_actual') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
             </div>
+            
+            {{-- ALERTA DE DOBLE INSCRIPCIÓN --}}
+            @if($advertencia)
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg animate-fade-in-down mt-2 shadow-sm">
+                    <div class="flex items-start">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-xl mr-3 mt-0.5"></i>
+                        <div>
+                            <h4 class="text-sm font-black text-red-800 uppercase mb-1 tracking-wider">¡Atención! Posible Duplicado</h4>
+                            <p class="text-sm text-red-700 leading-tight">{!! $advertencia !!}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <div class="mt-8 flex justify-end gap-3 border-t border-gray-100 pt-5">
                 <button type="button" wire:click="closeModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                     Cancelar
                 </button>
                 
-                {{-- Spinner anti-doble clic --}}
+                {{-- Spinner anti-doble clic y Cambio de Color si hay Advertencia --}}
                 <button type="submit" 
                     wire:loading.attr="disabled" 
                     wire:target="guardar"
-                    class="px-5 py-2.5 text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    class="px-5 py-2.5 text-sm font-bold text-white rounded-lg transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed {{ $confirmado ? 'bg-red-600 hover:bg-red-700 animate-pulse' : 'bg-orange-500 hover:bg-orange-600' }}">
                     
                     <span wire:loading.remove wire:target="guardar">
-                        <i class="fa-solid fa-check"></i> Registrar Inscripción
+                        @if($confirmado)
+                            <i class="fa-solid fa-triangle-exclamation"></i> Sí, Inscribir Doble
+                        @else
+                            <i class="fa-solid fa-check"></i> Registrar Inscripción
+                        @endif
                     </span>
 
                     <span wire:loading wire:target="guardar">

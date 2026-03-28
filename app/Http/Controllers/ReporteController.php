@@ -20,4 +20,9 @@ class ReporteController extends Controller
     {
         return view('reportes.egresos');
     }
+
+    public function adquisiciones()
+    {
+        return view('reportes.adquisiciones');
+    }
 }

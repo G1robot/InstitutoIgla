@@ -101,6 +101,14 @@
                         <span>Punto de Venta</span>
                     </a>
                 </li>
+
+                <li>
+                    <a href="{{ route('historial-modulos') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all {{ request()->routeIs('historial-modulos') ? 'bg-orange-50 text-orange-600 font-bold border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50 hover:text-orange-500' }}">
+                        <i class="fa-solid fa-chalkboard w-5 text-center {{ request()->routeIs('historial-modulos') ? 'text-orange-500' : 'text-gray-400' }}"></i>
+                        <span>Cursos De Capacitación</span>
+                    </a>
+                </li>
+                
                 <li>
                     <a href="{{ route('egresos') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all {{ request()->routeIs('egresos') ? 'bg-orange-50 text-orange-600 font-bold border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50 hover:text-orange-500' }}">
                         <i class="fa-solid fa-money-check-dollar w-5 text-center {{ request()->routeIs('egresos') ? 'text-orange-500' : 'text-gray-400' }}"></i>
@@ -129,32 +137,11 @@
                     </a>
                 </li>
 
-                {{-- DESPLEGABLE: MÓDULOS --}}
-                <li x-data="{ open: {{ request()->routeIs('modulos', 'categorias-modulos', 'inscripcion-modulo', 'historial-modulos') ? 'true' : 'false' }} }">
-                    <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-3 rounded-lg transition-all text-gray-600 hover:bg-gray-50 hover:text-orange-500 focus:outline-none">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-cubes w-5 text-center text-gray-400"></i>
-                            <span class="font-medium">Módulos Especiales</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="{'rotate-180': open}"></i>
-                    </button>
-                    <ul x-show="open" x-collapse class="mt-1 space-y-1 pl-11">
-                        <li>
-                            <a href="{{ route('inscripcion-modulo') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('inscripcion-modulo') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
-                                • Inscribir a Módulo
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('modulos') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('modulos') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
-                                • Catálogo de Módulos
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('historial-modulos') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('historial-modulos') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
-                                • Historial de Cursado
-                            </a>
-                        </li>
-                    </ul>
+                <li>
+                    <a href="{{ route('inscripcion-modulo') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all {{ request()->routeIs('inscripcion-modulo') ? 'bg-orange-50 text-orange-600 font-bold border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50 hover:text-orange-500' }}">
+                        <i class="fa-solid fa-book-open w-5 text-center {{ request()->routeIs('inscripcion-modulo') ? 'text-orange-500' : 'text-gray-400' }}"></i>
+                        <span>Inscripción Cursos Capacitación</span>
+                    </a>
                 </li>
 
                 {{-- ========================================== --}}
@@ -175,18 +162,25 @@
                         </button>
                         <ul x-show="open" x-collapse class="mt-1 space-y-1 pl-11">
                             <li>
-                                <a href="{{ route('planes') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('planes') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
-                                    • Planes de Estudio
-                                </a>
-                            </li>
-                            <li>
                                 <a href="{{ route('tarifas') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('tarifas') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
                                     • Tarifas Generales
                                 </a>
                             </li>
+                            
+                            <li>
+                                <a href="{{ route('planes') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('planes') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
+                                    • Planes de Estudio
+                                </a>
+                            </li>
+                            
                             <li>
                                 <a href="{{ route('categorias-modulos') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('categorias-modulos') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
-                                    • Cat. de Módulos
+                                    • Cat. de Curso de Capacitación
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('modulos') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('modulos') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
+                                    • Catálogo de Módulos
                                 </a>
                             </li>
                             <li>
@@ -225,6 +219,13 @@
                                 <i class="fa-solid fa-file-invoice mr-2 text-xs opacity-50"></i> Arqueo Diario
                             </a>
                         </li>
+
+                        <li>
+                            <a href="{{ route('reporte-adquisiciones') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('reporte-adquisiciones') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
+                                <i class="fa-solid fa-file-invoice mr-2 text-xs opacity-50"></i> Reporte de Adquisiciones
+                            </a>
+                        </li>
+                        
                         @if(Auth::user()->rol === 'administrador')
                         <li>
                             <a href="{{ route('reporte-ingresos') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('reporte-ingresos') ? 'text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-500 hover:bg-gray-50' }}">
@@ -236,6 +237,7 @@
                                 <i class="fa-solid fa-file-invoice mr-2 text-xs opacity-50"></i> Reporte de Egresos
                             </a>
                         </li>
+                        
                         @endif 
                     </ul>
                 </li>

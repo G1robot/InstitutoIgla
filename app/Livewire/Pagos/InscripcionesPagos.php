@@ -164,8 +164,8 @@ class InscripcionesPagos extends Component
 
         ///CAMBIO FECHA
         $fechaAUsar = $this->fechaPagoManual 
-                      ? Carbon::parse($this->fechaPagoManual)->setTime(12, 0, 0) 
-                      : Carbon::now();
+            ? Carbon::parse($this->fechaPagoManual)->setTimeFrom(Carbon::now()) 
+            : Carbon::now();
         
         $metodosUsados = [];
 

@@ -32,11 +32,24 @@ class Inscripciones extends Component
 
     public $searchEstudiante= '';
 
+    public $showModalTurno = false;
+    public $inscripcion_id_editar = '';
+    public $nuevo_id_turno = '';
+
+    public $advertencia = null;
+    public $confirmado = false;
+
     public function mount()
     {
         $this->gestion_inicio = (int) date('Y');
         $this->planes = PlanModel::all();
         $this->turnos = TurnoModel::all();
+    }
+
+    public function resetAdvertencia()
+    {
+        $this->advertencia = null;
+        $this->confirmado = false;
     }
 
     public function updatedSearchEstudiante()
@@ -55,16 +68,11 @@ class Inscripciones extends Component
     public function seleccionarEstudiante($id)
     {
         $estudiante = EstudianteModel::find($id);
-        
         if ($estudiante) {
-            // 2. Guardamos el ID para el registro
             $this->id_estudiante = $estudiante->id_estudiante;
-            
-            // 3. ¡LA MAGIA! Sobrescribimos lo que el usuario escribió con el nombre oficial
             $this->searchEstudiante = $estudiante->nombre . ' ' . $estudiante->apellido;
-            
-            // 4. Ocultamos la lista desplegable vaciando el array
             $this->estudiantes_encontrados = [];
+            $this->resetAdvertencia(); // <-- AGREGAR AQUÍ
         }
     }
 
@@ -96,6 +104,7 @@ class Inscripciones extends Component
         $this->estado = 'activo';
         $this->searchEstudiante = '';
         $this->estudiantes_encontrados = [];
+        $this->resetAdvertencia();
     }
 
     public function rules()
@@ -113,6 +122,20 @@ class Inscripciones extends Component
     public function guardar()
     {
         $this->validate();
+
+        if (!$this->confirmado) {
+            $inscripcionActiva = InscripcionModel::with('plan')
+                ->where('id_estudiante', $this->id_estudiante)
+                ->where('estado', 'activo')
+                ->first();
+
+            if ($inscripcionActiva) {
+                $nombrePlan = $inscripcionActiva->plan ? $inscripcionActiva->plan->nombre : 'Desconocido';
+                $this->advertencia = "El estudiante ya se encuentra inscrito y ACTIVO en el plan: <strong>{$nombrePlan}</strong>. ¿Desea proceder de todos modos y generarle una doble inscripción?";
+                $this->confirmado = true; 
+                return; 
+            }
+        }
 
         DB::transaction(function () {
             // 1. Crear Inscripción
@@ -225,8 +248,6 @@ class Inscripciones extends Component
             }
         } elseif ($plan->tipo_pago === 'unico') {
             
-            // --- NUEVO: PLAN AL CONTADO ---
-            // Le damos exactamente 3 meses desde la fecha de inscripción para pagar la totalidad
             $fechaVencimiento = Carbon::parse($ins->fecha_inscripcion)->addMonths(3);
 
             PagoModel::create([
@@ -238,10 +259,12 @@ class Inscripciones extends Component
                 'fecha_pago' => null,
                 
                 'descripcion' => "Pago Único al Contado (Plan de $yearsCount Años)",
-                'monto_total' => $plan->costo_total, // Aquí entra el precio con descuento o el calculado
+                'monto_total' => $plan->costo_total,
                 'monto_abonado' => 0,
                 'estado' => 'pendiente',
             ]);
+        } elseif ($plan->tipo_pago === 'beca') {
+            
         }
     }
 
@@ -328,6 +351,43 @@ class Inscripciones extends Component
         $ins->save();
 
         session()->flash('success', 'Estado de la inscripción actualizado a egresado.');
+    }
+
+    public function abrirModalTurno($id)
+    {
+        $ins = InscripcionModel::find($id);
+        if($ins) {
+            $this->inscripcion_id_editar = $ins->id_inscripcion;
+            $this->nuevo_id_turno = $ins->id_turno; // Cargamos el turno actual
+            $this->showModalTurno = true;
+        }
+    }
+
+    public function actualizarTurno()
+    {
+        $this->validate([
+            'nuevo_id_turno' => 'required|exists:turno,id_turno'
+        ]);
+
+        $ins = InscripcionModel::find($this->inscripcion_id_editar);
+        if ($ins) {
+            $ins->id_turno = $this->nuevo_id_turno;
+            $ins->save();
+
+            $this->cerrarModalTurno();
+            
+            $this->dispatch('toast', [
+                'icon' => 'success', 
+                'title' => 'Turno actualizado correctamente'
+            ]);
+        }
+    }
+
+    public function cerrarModalTurno()
+    {
+        $this->showModalTurno = false;
+        $this->inscripcion_id_editar = '';
+        $this->nuevo_id_turno = '';
     }
     
 }
