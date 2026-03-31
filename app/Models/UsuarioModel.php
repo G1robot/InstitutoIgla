@@ -14,12 +14,13 @@ class UsuarioModel extends Authenticatable
     protected $table = 'usuario';
     protected $primaryKey = 'id_usuario';
 
-    // Asegúrate de que los nombres coincidan con tu migración actual
+    
     protected $fillable = [
         'nombre', 
         'telefono', 
         'usuario', 
-        'password', // O 'contrasena' si no cambiaste la migración, pero te recomiendo 'password'
+        'password',
+        'foto',
         'rol'
     ];
 

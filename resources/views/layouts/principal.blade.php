@@ -42,9 +42,16 @@
             <div class="relative">
                 <button data-dropdown-toggle="dropdown-user"
                     class="flex items-center gap-3 text-gray-300 font-bold hover:text-white transition px-3 py-1.5 rounded-lg hover:bg-gray-800 border border-transparent hover:border-gray-700">
-                    <div class="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-md">
-                        <i class="fa-solid fa-user text-sm"></i>
-                    </div>
+                    
+                    {{-- MAGIA: Mostramos la foto real si existe --}}
+                    @if(Auth::user()->foto)
+                        <img src="{{ asset('storage/' . Auth::user()->foto) }}" class="w-8 h-8 rounded-full object-cover shadow-md border border-gray-600">
+                    @else
+                        <div class="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-md">
+                            <i class="fa-solid fa-user text-sm"></i>
+                        </div>
+                    @endif
+
                     <div class="text-left hidden md:block">
                         <p class="text-sm leading-tight text-white">{{ Auth::guard('web')->user()->nombre }}</p>
                         <p class="text-[10px] text-orange-400 uppercase tracking-widest">{{ Auth::user()->rol }}</p>
@@ -52,7 +59,15 @@
                     <i class="fa-solid fa-chevron-down text-xs text-gray-500 ml-1"></i>
                 </button>
 
-                <div id="dropdown-user" class="hidden absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-xl border border-gray-100 overflow-hidden">
+                <div id="dropdown-user" class="hidden absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-xl border border-gray-100 overflow-hidden z-50">
+                    
+                    {{-- NUEVO: Link al perfil --}}
+                    <div class="px-2 pt-2 border-b border-gray-100 pb-2">
+                        <a href="{{ route('perfil') }}" class="w-full flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition font-bold">
+                            <i class="fa-solid fa-id-badge"></i> Mi Perfil
+                        </a>
+                    </div>
+
                     <ul class="py-2 text-sm">
                         <li class="px-2">
                             @if(Auth::user()->rol === 'administrador')

@@ -30,6 +30,7 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/inscripciones',[InscripcionController::class,'index'])->name('inscripciones');
     Route::get('/pagos',[PagoController::class,'index'])->name('pagos');
     Route::get('/usuarios',[UsuarioController::class,'index'])->name('usuarios');
+    Route::get('/perfil',[UsuarioController::class,'perfil'])->name('perfil');
     Route::get('/tarifas',[TarifaController::class,'index'])->name('tarifas');
     Route::get('/modulos',[ModuloController::class,'index'])->name('modulos');
     Route::get('/inscripcion-modulo',[InscripcionModuloController::class,'index'])->name('inscripcion-modulo');
