@@ -161,6 +161,11 @@ class InscripcionesPagos extends Component
         $cajaAbierta = CajaModel::where('id_usuario', Auth::id())
                             ->where('estado', 'abierta')
                             ->first();
+            
+        if (!$cajaAbierta) {
+            $this->addError('general', '¡Alto ahí! No tienes una caja abierta.');
+            return;
+        }
 
         ///CAMBIO FECHA
         $fechaAUsar = $this->fechaPagoManual 

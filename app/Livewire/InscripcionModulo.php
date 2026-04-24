@@ -98,6 +98,13 @@ class InscripcionModulo extends Component
         $this->total = 0;
     }
 
+    public function limpiarBuscador()
+    {
+        $this->estudianteSeleccionado = null; // Quita al estudiante
+        $this->searchEstudiante = '';         // Vacía la caja de texto
+        $this->estudiantesEncontrados = [];   // Oculta la lista desplegable
+    }
+
     public function verificarPUP()
     {
         if ($this->estudianteSeleccionado) {

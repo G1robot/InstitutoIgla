@@ -104,6 +104,14 @@
                                         </button>
                                     @endif
 
+                                    @if($i->estado !== 'anulado')
+                                        <button wire:click="anularPorError({{ $i->id_inscripcion }})"
+                                            onclick="confirm('¿Estás seguro de ANULAR esta inscripción? Si ya se cobró dinero, se descontará del arqueo y deberás devolverlo al estudiante.') || event.stopImmediatePropagation()"
+                                            class="bg-gray-50 text-gray-500 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-lg transition border border-gray-200 shadow-sm text-xs font-bold" title="Anular por Error">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    @endif
+
                                     @if($i->estado !== 'egresado')
                                         <button wire:click="egresado({{ $i->id_inscripcion }})"
                                             onclick="confirm('¿Confirmar que este estudiante ya egresó del plan?') || event.stopImmediatePropagation()"

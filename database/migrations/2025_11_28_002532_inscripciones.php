@@ -73,7 +73,7 @@ return new class extends Migration
             $table->integer('duracion_meses')->nullable();
             $table->decimal('costo_anual', 8, 2)->nullable();
             $table->decimal('costo_mensual', 8, 2)->nullable();
-            $table->enum('tipo_pago', ['mensual', 'anual']);
+            $table->enum('tipo_pago', ['mensual', 'anual', 'unico', 'beca']);
             $table->timestamps();
         });
 

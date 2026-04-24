@@ -81,6 +81,13 @@ class VentaArticulos extends Component
         $this->estudiantesEncontrados = [];
     }
 
+    public function limpiarBuscador()
+    {
+        $this->estudianteSeleccionado = null; // Quita al estudiante
+        $this->searchEstudiante = '';         // Vacía la caja de texto
+        $this->estudiantesEncontrados = [];   // Oculta la lista desplegable
+    }
+
     public function render()
     {
         $categorias = CategoriaArticuloModel::orderBy('nombre')->get();

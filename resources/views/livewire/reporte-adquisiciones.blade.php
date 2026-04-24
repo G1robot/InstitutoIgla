@@ -22,7 +22,8 @@
                 @if(!empty($estudiantesEncontrados))
                     <div class="absolute w-full bg-white shadow-2xl border mt-1 rounded-lg overflow-hidden animate-fade-in-down">
                         @foreach($estudiantesEncontrados as $est)
-                            <div wire:click="seleccionarEstudiante({{ $est->id_estudiante }})"
+                            <div wire:key="estudiante-{{ $est->id_estudiante }}" 
+                                wire:click="seleccionarEstudiante({{ $est->id_estudiante }})"
                                 class="p-4 hover:bg-blue-50 cursor-pointer border-b last:border-0 flex justify-between items-center transition-colors">
                                 <div>
                                     <span class="font-bold text-gray-800 text-lg">{{ $est->nombre }} {{ $est->apellido }}</span><br>

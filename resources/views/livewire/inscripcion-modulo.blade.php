@@ -45,7 +45,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button wire:click="$set('estudianteSeleccionado', null)" class="text-red-400 hover:text-red-600 transition bg-white rounded-full px-4 py-2 shadow-sm text-xs font-bold border border-red-100">
+                            <button wire:click="limpiarBuscador" class="text-red-400 hover:text-red-600 transition bg-white rounded-full px-3 py-1 shadow-sm text-xs font-bold" title="Cambiar estudiante">
                                 <i class="fa-solid fa-xmark mr-1"></i> Cambiar
                             </button>
                         </div>

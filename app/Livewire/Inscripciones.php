@@ -10,6 +10,7 @@ use App\Models\InscripcionModel;
 use App\Models\PagoModel;
 use App\Models\TarifaModel;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithPagination;
 
@@ -351,6 +352,64 @@ class Inscripciones extends Component
         $ins->save();
 
         session()->flash('success', 'Estado de la inscripción actualizado a egresado.');
+    }
+
+    public function anularPorError($id_inscripcion)
+    {
+        $ins = InscripcionModel::find($id_inscripcion);
+        if (!$ins) return;
+
+        // 1. Verificamos si ya le cobraron dinero a esta inscripción
+        $pagosConDinero = PagoModel::where('origen_id', $id_inscripcion)
+                            ->where('origen_type', InscripcionModel::class)
+                            ->where('monto_abonado', '>', 0)
+                            ->count();
+
+        // ESCENARIO A: YA HAY DINERO COBRADO
+        if ($pagosConDinero > 0) {
+            
+            // Solo el administrador puede devolver dinero y alterar el arqueo
+            if (Auth::user()->rol !== 'administrador') {
+                $this->dispatch('toast', [
+                    'icon' => 'error', 
+                    'title' => 'Esta inscripción tiene dinero cobrado. Llama al Administrador para anularla.'
+                ]);
+                return;
+            }
+
+            // Es administrador: Anulamos los pagos para que el dinero se reste del Arqueo
+            DB::transaction(function () use ($id_inscripcion, $ins) {
+                PagoModel::where('origen_id', $id_inscripcion)
+                         ->where('origen_type', InscripcionModel::class)
+                         ->update(['estado' => 'anulado']); // Esto los saca del arqueo
+
+                $ins->estado = 'anulado';
+                $ins->save();
+            });
+
+            $this->dispatch('toast', [
+                'icon' => 'success', 
+                'title' => 'Inscripción anulada y el dinero se revirtió del Arqueo de Caja.'
+            ]);
+
+        } 
+        // ESCENARIO B: NO HAY DINERO (Fue un error limpio)
+        else {
+            DB::transaction(function () use ($id_inscripcion, $ins) {
+                // Borramos las cuotas vacías porque solo son basura
+                PagoModel::where('origen_id', $id_inscripcion)
+                         ->where('origen_type', InscripcionModel::class)
+                         ->delete(); 
+
+                $ins->estado = 'anulado';
+                $ins->save();
+            });
+
+            $this->dispatch('toast', [
+                'icon' => 'success', 
+                'title' => 'Inscripción errónea anulada correctamente.'
+            ]);
+        }
     }
 
     public function abrirModalTurno($id)
