@@ -35,12 +35,9 @@ return new class extends Migration
             $table->id('id_venta');
             $table->unsignedBigInteger('id_estudiante');
             
-            $table->dateTime('fecha_venta'); // DateTime para saber hora exacta
+            $table->dateTime('fecha_venta');
             $table->decimal('monto_total', 10, 2);
             $table->enum('estado', ['finalizada', 'anulada'])->default('finalizada');
-            
-            // Opcional: Usuario que hizo la venta
-            // $table->unsignedBigInteger('id_usuario'); 
 
             $table->timestamps();
             

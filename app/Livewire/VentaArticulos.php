@@ -83,9 +83,9 @@ class VentaArticulos extends Component
 
     public function limpiarBuscador()
     {
-        $this->estudianteSeleccionado = null; // Quita al estudiante
-        $this->searchEstudiante = '';         // Vacía la caja de texto
-        $this->estudiantesEncontrados = [];   // Oculta la lista desplegable
+        $this->estudianteSeleccionado = null;
+        $this->searchEstudiante = '';      
+        $this->estudiantesEncontrados = [];
     }
 
     public function render()

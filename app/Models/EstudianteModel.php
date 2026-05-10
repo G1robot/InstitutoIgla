@@ -21,21 +21,23 @@ class EstudianteModel extends Model
         return $this->hasMany(InscripcionModel::class, 'id_estudiante', 'id_estudiante');
     }
 
-    // NUEVO: Inscripciones a Módulos sueltos
     public function inscripcionesModulos()
     {
         return $this->hasMany(InscripcionModuloModel::class, 'id_estudiante', 'id_estudiante');
     }
 
-    // NUEVO: Derechos adquiridos (Para verificar PUP)
     public function derechos()
     {
         return $this->hasMany(EstudianteDerechoModel::class, 'id_estudiante', 'id_estudiante');
     }
 
-    // NUEVO: Todos los pagos (Global)
     public function pagos()
     {
         return $this->hasMany(PagoModel::class, 'id_estudiante', 'id_estudiante');
+    }
+
+    public function controlInsumos()
+    {
+        return $this->hasMany(ControlInsumoModel::class, 'id_estudiante', 'id_estudiante');
     }
 }

@@ -110,6 +110,14 @@
                         <span>Gestión de Pagos</span>
                     </a>
                 </li>
+                
+                <li>
+                    <a href="{{ route('control-insumos') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all {{ request()->routeIs('control-insumos') ? 'bg-orange-50 text-orange-600 font-bold border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50 hover:text-orange-500' }}">
+                        <i class="fa-solid fa-boxes-packing w-5 text-center {{ request()->routeIs('control-insumos') ? 'text-orange-500' : 'text-gray-400' }}"></i>
+                        <span>Control de Insumos</span>
+                    </a>
+                </li>
+
                 <li>
                     <a href="{{ route('venta-articulos') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all {{ request()->routeIs('venta-articulos') ? 'bg-orange-50 text-orange-600 font-bold border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50 hover:text-orange-500' }}">
                         <i class="fa-solid fa-cart-shopping w-5 text-center {{ request()->routeIs('venta-articulos') ? 'text-orange-500' : 'text-gray-400' }}"></i>

@@ -5,7 +5,7 @@
     {{-- ========================================== --}}
     <div class="ocultar-al-imprimir">
         
-        <div class="mb-8">
+        <div class="mb-8 border-l-4 border-orange-500 pl-4">
             <h2 class="text-2xl font-black text-gray-800 tracking-tight">PUNTO DE VENTA (INSUMOS)</h2>
             <p class="text-sm text-gray-500 mt-1">Registra la venta de artículos, uniformes y servicios adicionales.</p>
         </div>

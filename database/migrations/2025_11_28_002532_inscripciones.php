@@ -145,14 +145,10 @@ return new class extends Migration
 
         Schema::create('metodos_pago', function (Blueprint $table) {
             $table->id('id_metodo_pago');
-            $table->string('nombre', 50); // Ej: "Efectivo", "QR Simple", "Transferencia"
-            
-            // ESTE CAMPO ES LA CLAVE DEL ÉXITO:
-            // Si es true, el dinero entra al cajón físico.
-            // Si es false, el dinero va al banco (no se cuenta en el arqueo físico).
+            $table->string('nombre', 50); 
             $table->boolean('es_efectivo')->default(false); 
             
-            $table->boolean('activo')->default(true); // Para ocultar métodos viejos en el futuro
+            $table->boolean('activo')->default(true); 
             $table->timestamps();
         });
 
