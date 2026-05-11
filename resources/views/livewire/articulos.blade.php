@@ -37,7 +37,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 bg-white">
                     @forelse($articulos as $art)
-                        <tr class="hover:bg-orange-50 transition-colors group">
+                        <tr class="hover:bg-orange-50 transition-colors group" wire:key="art-{{ $art->id_articulo }}">
                             
                             {{-- Nombre --}}
                             <td class="px-6 py-4 whitespace-nowrap">
