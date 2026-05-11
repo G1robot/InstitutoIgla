@@ -127,6 +127,11 @@
                                                 </button>
                                             @endif
 
+                                            <button wire:click="abrirCobroMultiple({{ $est->id_estudiante }})" wire:loading.attr="disabled"
+                                                class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg transition border border-blue-200 shadow-sm text-xs font-bold disabled:opacity-50 ml-1" title="Cobrar Múltiples Semanas">
+                                                <i class="fa-solid fa-layer-group"></i> Múltiple
+                                            </button>
+
                                             {{-- BOTÓN HISTORIAL (Siempre visible) --}}
                                             <button wire:click="abrirHistorial({{ $est->id_estudiante }})" wire:loading.attr="disabled"
                                                 class="bg-gray-50 text-gray-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg transition border border-gray-200 shadow-sm text-xs font-bold disabled:opacity-50 ml-2" title="Ver Historial">
@@ -196,6 +201,69 @@
                     </div>
                 </div>
             </div>
+        @endif
+        {{-- MODAL DE COBRO MÚLTIPLE --}}
+        @if($showModalMultiple)
+        <div class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" wire:click="cerrarModalMultiple"></div>
+
+                <div class="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl animate-fade-in-up">
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                        <div>
+                            <h3 class="text-lg font-black text-gray-800 uppercase"><i class="fa-solid fa-layer-group text-blue-500 mr-2"></i> Cobro Múltiple</h3>
+                            <p class="text-sm text-gray-500">{{ $estudianteMultiple->nombre }} {{ $estudianteMultiple->apellido }}</p>
+                        </div>
+                        <button wire:click="cerrarModalMultiple" class="text-gray-400 hover:text-red-500 transition">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
+
+                    @error('multiple') 
+                        <div class="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold border border-red-200">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> {{ $message }}
+                        </div>
+                    @enderror
+
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Fechas a cobrar:</label>
+                        <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                            @foreach($fechasMultiple as $index => $fecha)
+                                <div class="flex items-center gap-2">
+                                    <input type="date" wire:model="fechasMultiple.{{ $index }}" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-blue-500 focus:border-blue-500">
+                                    @if(count($fechasMultiple) > 1)
+                                        <button wire:click="quitarFechaMultiple({{ $index }})" class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white w-9 h-9 rounded-lg flex items-center justify-center transition border border-red-200">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                        
+                        <button wire:click="agregarFechaMultiple" class="mt-3 w-full border-2 border-dashed border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-600 py-2 rounded-lg font-bold text-sm transition">
+                            <i class="fa-solid fa-plus mr-1"></i> Añadir otra semana
+                        </button>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-5">
+                        <div class="flex justify-between items-center font-black text-gray-800 text-lg">
+                            <span>TOTAL:</span>
+                            @php
+                                $art = \App\Models\ArticuloModel::find($articulo_seleccionado);
+                                $totalModal = $art ? $art->precio * count($fechasMultiple) : 0;
+                            @endphp
+                            <span class="text-blue-600">{{ number_format($totalModal, 2) }} Bs</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1 text-right">Se cobrará usando el método configurado en la barra superior.</div>
+                    </div>
+
+                    <button wire:click="procesarCobroMultiple" wire:loading.attr="disabled" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50">
+                        <span wire:loading.remove wire:target="procesarCobroMultiple"><i class="fa-solid fa-cash-register"></i> Procesar y Generar Recibo</span>
+                        <span wire:loading wire:target="procesarCobroMultiple"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
         @endif
     </div>
     {{-- ========================================== --}}

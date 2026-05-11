@@ -40,6 +40,10 @@ class ControlInsumos extends Component
     public $datosRecibo = null;
     public $ultimoIdVenta = null;
 
+    public $showModalMultiple = false;
+    public $estudianteMultiple = null;
+    public $fechasMultiple = [];
+
     public function mount()
     {
         $this->fecha_semana = Carbon::now()->format('Y-m-d');
@@ -74,8 +78,11 @@ class ControlInsumos extends Component
     public function registrarEstado($id_estudiante, $estado)
     {
         // 1. Verificación anti-duplicados
+        $inicioSemana = Carbon::parse($this->fecha_semana)->startOfWeek()->format('Y-m-d');
+        $finSemana = Carbon::parse($this->fecha_semana)->endOfWeek()->format('Y-m-d');
+
         $existe = ControlInsumoModel::where('id_estudiante', $id_estudiante)
-            ->whereDate('fecha_semana', $this->fecha_semana)
+            ->whereBetween('fecha_semana', [$inicioSemana, $finSemana])
             ->first();
 
         if ($existe) {
@@ -237,13 +244,172 @@ class ControlInsumos extends Component
         $this->historialInsumos = [];
     }
 
+    public function abrirCobroMultiple($id_estudiante)
+    {
+        $this->estudianteMultiple = EstudianteModel::find($id_estudiante);
+        // Iniciamos el array con la fecha que esté seleccionada en el filtro
+        $this->fechasMultiple = [$this->fecha_semana]; 
+        $this->showModalMultiple = true;
+    }
+
+    public function agregarFechaMultiple()
+    {
+        // Al darle clic al +, añade la semana siguiente automáticamente
+        $ultimaFecha = end($this->fechasMultiple);
+        $nuevaFecha = $ultimaFecha 
+            ? Carbon::parse($ultimaFecha)->addDays(7)->format('Y-m-d') 
+            : Carbon::now()->format('Y-m-d');
+            
+        $this->fechasMultiple[] = $nuevaFecha;
+    }
+
+    public function quitarFechaMultiple($indice)
+    {
+        unset($this->fechasMultiple[$indice]);
+        $this->fechasMultiple = array_values($this->fechasMultiple); // Reindexar
+    }
+
+    public function cerrarModalMultiple()
+    {
+        $this->showModalMultiple = false;
+        $this->estudianteMultiple = null;
+        $this->fechasMultiple = [];
+    }
+
+    public function procesarCobroMultiple()
+    {
+        // 1. Validaciones
+        if(empty($this->fechasMultiple)) {
+            $this->addError('multiple', 'Debe agregar al menos una fecha.'); return;
+        }
+        if (!$this->articulo_seleccionado || !$this->metodo_pago_seleccionado) {
+            $this->addError('multiple', 'Seleccione un tipo de Insumo y Método de pago en la barra superior.'); return;
+        }
+
+        $articulo = ArticuloModel::find($this->articulo_seleccionado);
+        $cajaAbierta = CajaModel::where('id_usuario', Auth::id())->where('estado', 'abierta')->first();
+
+        if (!$cajaAbierta) {
+            $this->addError('multiple', 'No hay caja abierta.'); return;
+        }
+
+        // 2. Verificar que ninguna de las fechas elegidas ya esté pagada/registrada
+        $semanasSeleccionadas = []; // Para evitar duplicados en el mismo modal
+
+        foreach($this->fechasMultiple as $fecha) {
+            $inicioSemana = Carbon::parse($fecha)->startOfWeek()->format('Y-m-d');
+            $finSemana = Carbon::parse($fecha)->endOfWeek()->format('Y-m-d');
+
+            // A. Evitar que pongan dos días de la misma semana en el modal
+            if (in_array($inicioSemana, $semanasSeleccionadas)) {
+                $this->addError('multiple', 'Has añadido dos fechas que pertenecen a la misma semana. Solo se cobra 1 insumo por semana.');
+                return;
+            }
+            $semanasSeleccionadas[] = $inicioSemana;
+
+            // B. Revisar si la base de datos ya tiene un pago en esa semana
+            $existe = ControlInsumoModel::where('id_estudiante', $this->estudianteMultiple->id_estudiante)
+                        ->whereBetween('fecha_semana', [$inicioSemana, $finSemana])->first();
+                        
+            if($existe) {
+                $this->addError('multiple', "El alumno ya pagó la semana del " . Carbon::parse($inicioSemana)->format('d/m/Y'));
+                return;
+            }
+        }
+
+        // 3. Ejecutar la transacción maestra
+        DB::transaction(function () use ($articulo, $cajaAbierta) {
+            $cantidadSemanas = count($this->fechasMultiple);
+            $totalCobrar = $articulo->precio * $cantidadSemanas;
+
+            // A. Venta global
+            $venta = VentaModel::create([
+                'id_estudiante' => $this->estudianteMultiple->id_estudiante,
+                'fecha_venta' => Carbon::now(),
+                'monto_total' => $totalCobrar,
+                'estado' => 'finalizada'
+            ]);
+
+            $this->ultimoIdVenta = $venta->id_venta;
+            $itemsRecibo = [];
+
+            // B. Recorrer cada fecha y registrar su detalle y su control de insumo
+            foreach($this->fechasMultiple as $fecha) {
+                DetalleVentaModel::create([
+                    'id_venta' => $venta->id_venta,
+                    'id_articulo' => $articulo->id_articulo,
+                    'cantidad' => 1,
+                    'precio_unitario' => $articulo->precio,
+                    'subtotal' => $articulo->precio
+                ]);
+
+                ControlInsumoModel::create([
+                    'id_estudiante' => $this->estudianteMultiple->id_estudiante,
+                    'fecha_semana' => $fecha,
+                    'estado' => 'pagado',
+                    'id_venta' => $venta->id_venta
+                ]);
+
+                // Armamos la línea para el PDF, asegurando que diga "Insumo Semanal (Fecha)"
+                $itemsRecibo[] = [
+                    'cantidad' => 1,
+                    'nombre' => $articulo->nombre . ' (Sem: ' . Carbon::parse($fecha)->format('d/m/y') . ')',
+                    'precio' => $articulo->precio,
+                    'subtotal' => $articulo->precio
+                ];
+            }
+
+            // C. El Pago y la Transacción para la contadora
+            $pago = PagoModel::create([
+                'origen_id' => $venta->id_venta,
+                'origen_type' => VentaModel::class,
+                'id_estudiante' => $this->estudianteMultiple->id_estudiante,
+                'fecha_vencimiento' => Carbon::now(),
+                'fecha_pago' => Carbon::now(),
+                'descripcion' => "Pago Múltiple Insumos ($cantidadSemanas semanas)",
+                'monto_total' => $totalCobrar,
+                'monto_abonado' => $totalCobrar,
+                'estado' => 'pagado'
+            ]);
+
+            TransaccionModel::create([
+                'id_pago' => $pago->id_pago,
+                'id_metodo_pago' => $this->metodo_pago_seleccionado,
+                'id_caja' => $cajaAbierta->id_caja,
+                'monto' => $totalCobrar,
+                'fecha_transaccion' => Carbon::now()
+            ]);
+
+            // D. Mandar datos al recibo
+            $this->datosRecibo = [
+                'nro_recibo' => str_pad($venta->id_venta, 6, '0', STR_PAD_LEFT),
+                'estudiante' => $this->estudianteMultiple->nombre . ' ' . $this->estudianteMultiple->apellido,
+                'ci' => $this->estudianteMultiple->ci,
+                'fecha' => Carbon::now()->format('d/m/Y H:i'),
+                'cajero' => Auth::user()->nombre ?? 'Administrador',
+                'items' => $itemsRecibo, // Aquí va el array con todas las fechas
+                'total' => $totalCobrar,
+                'ingresado' => $totalCobrar,
+                'cambio' => 0,
+            ];
+        });
+
+        $this->cerrarModalMultiple();
+        $this->showModalExito = true;
+    }
+
     public function render()
     {
         $search = mb_strtolower(trim($this->search));
         $fecha = $this->fecha_semana;
 
-        $estudiantes = EstudianteModel::with(['controlInsumos' => function($query) use ($fecha) {
-                $query->whereDate('fecha_semana', $fecha);
+        // 1. Calculamos la semana completa en base a la fecha seleccionada
+        $inicioSemana = Carbon::parse($fecha)->startOfWeek()->format('Y-m-d');
+        $finSemana = Carbon::parse($fecha)->endOfWeek()->format('Y-m-d');
+
+        $estudiantes = EstudianteModel::with(['controlInsumos' => function($query) use ($inicioSemana, $finSemana) {
+                // 2. Buscamos registros en TODA esa semana, no solo en ese día
+                $query->whereBetween('fecha_semana', [$inicioSemana, $finSemana]);
             }])
             ->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$search}%"])
