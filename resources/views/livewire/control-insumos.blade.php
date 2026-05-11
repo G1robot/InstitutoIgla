@@ -8,15 +8,28 @@
                     <p class="text-sm text-gray-500 mt-1">Registro rápido de pagos, faltas y licencias.</p>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-                    
-                    {{-- Nuevo: Selector de Método de Pago Global --}}
-                    <div class="relative w-full md:w-40">
+                <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+            
+                    {{-- NUEVO: Selector de Tipo de Insumo --}}
+                    <div class="relative w-full sm:w-auto min-w-[180px]">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-box text-gray-400"></i>
+                        </div>
+                        <select wire:model="articulo_seleccionado" 
+                            class="w-full pl-10 pr-3 py-2 border border-blue-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-blue-500 focus:border-blue-500 bg-blue-50 focus:bg-white transition" title="Tipo de Insumo a cobrar">
+                            @foreach($articulosInsumo as $art)
+                                <option value="{{ $art->id_articulo }}">{{ $art->nombre }} ({{ number_format($art->precio, 2) }} Bs)</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Selector de Método de Pago --}}
+                    <div class="relative w-full sm:w-auto min-w-[140px]">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-wallet text-gray-400"></i>
                         </div>
                         <select wire:model="metodo_pago_seleccionado" 
-                            class="w-full pl-10 pr-3 py-2 border border-orange-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-orange-500 focus:border-orange-500 bg-orange-50 focus:bg-white transition" title="Método de pago a utilizar">
+                            class="w-full pl-10 pr-3 py-2 border border-orange-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-orange-500 focus:border-orange-500 bg-orange-50 focus:bg-white transition" title="Método de pago">
                             @foreach($metodosPago as $metodo)
                                 <option value="{{ $metodo->id_metodo_pago }}">{{ $metodo->nombre }}</option>
                             @endforeach
@@ -24,7 +37,7 @@
                     </div>
 
                     {{-- Selector de Fecha --}}
-                    <div class="relative w-full md:w-44">
+                    <div class="relative w-full sm:w-auto min-w-[150px]">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-regular fa-calendar text-gray-400"></i>
                         </div>
@@ -33,7 +46,7 @@
                     </div>
 
                     {{-- Buscador --}}
-                    <div class="relative w-full md:w-64">
+                    <div class="relative w-full sm:w-auto min-w-[200px]">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
                         </div>

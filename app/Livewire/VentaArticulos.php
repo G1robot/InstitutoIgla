@@ -90,9 +90,17 @@ class VentaArticulos extends Component
 
     public function render()
     {
-        $categorias = CategoriaArticuloModel::orderBy('nombre')->get();
+        // 1. Cargamos las categorías EXCLUYENDO "INSUMOS SEMANAL"
+        $categorias = CategoriaArticuloModel::where('nombre', '!=', 'INSUMOS SEMANAL')
+                                            ->orderBy('nombre')
+                                            ->get();
         
         $query = ArticuloModel::query();
+        
+        // 2. Excluimos los artículos que pertenezcan a esa categoría
+        $query->whereHas('categoria', function($q) {
+            $q->where('nombre', '!=', 'INSUMOS SEMANAL');
+        });
         
         if ($this->id_categoria) {
             $query->where('id_categoria_articulo', $this->id_categoria);
@@ -102,7 +110,6 @@ class VentaArticulos extends Component
         }
 
         // Importante: No mostrar items sin stock (excepto servicios)
-        // Lógica: (stock > 0 OR stock is null)
         $query->where(function($q) {
             $q->where('stock', '>', 0)->orWhereNull('stock');
         });
@@ -254,16 +261,39 @@ class VentaArticulos extends Component
             ]);
 
             // D. Registrar las Transacciones (El dinero real para el Arqueo)
+            $cambioRestante = max(0, $this->totalIngresado - $this->total);
+
             foreach ($this->montosPago as $idMetodo => $monto) {
                 $montoReal = (float) $monto;
+
                 if ($montoReal > 0) {
-                    TransaccionModel::create([
-                        'id_pago' => $pago->id_pago,
-                        'id_metodo_pago' => $idMetodo,
-                        'id_caja' => $cajaAbierta->id_caja,
-                        'monto' => $montoReal,
-                        'fecha_transaccion' => Carbon::now()
-                    ]);
+                    // 2. Buscamos el método para saber si es Efectivo
+                    $metodoObj = MetodoPagoModel::find($idMetodo);
+                    
+                    // 3. Verificamos si es Efectivo (por su nombre o ID)
+                    $esEfectivo = $metodoObj && (strtolower($metodoObj->nombre) === 'efectivo' || $metodoObj->id_metodo_pago == 1);
+
+                    // 4. Si hay cambio por devolver y estamos procesando el Efectivo, se lo restamos
+                    if ($esEfectivo && $cambioRestante > 0) {
+                        if ($montoReal >= $cambioRestante) {
+                            $montoReal -= $cambioRestante;
+                            $cambioRestante = 0; // Ya devolvimos todo el cambio
+                        } else {
+                            $cambioRestante -= $montoReal;
+                            $montoReal = 0; // Se usó todo este monto para dar cambio
+                        }
+                    }
+
+                    // 5. SOLO guardamos la transacción si quedó saldo a favor de la caja
+                    if ($montoReal > 0) {
+                        TransaccionModel::create([
+                            'id_pago' => $pago->id_pago,
+                            'id_metodo_pago' => $idMetodo,
+                            'id_caja' => $cajaAbierta->id_caja,
+                            'monto' => $montoReal,
+                            'fecha_transaccion' => Carbon::now()
+                        ]);
+                    }
                 }
             }
         });

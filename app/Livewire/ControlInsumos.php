@@ -13,6 +13,7 @@ use App\Models\MetodoPagoModel;
 use App\Models\PagoModel;
 use App\Models\TransaccionModel;
 use App\Models\CajaModel;
+use App\Models\CategoriaArticuloModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -27,6 +28,8 @@ class ControlInsumos extends Component
 
     public $metodosPago = [];
     public $metodo_pago_seleccionado;
+    public $articulosInsumo = [];
+    public $articulo_seleccionado;
     
     // Modal Historial
     public $showModalHistorial = false;
@@ -44,6 +47,18 @@ class ControlInsumos extends Component
 
         $efectivo = $this->metodosPago->where('nombre', 'Efectivo')->first();
         $this->metodo_pago_seleccionado = $efectivo ? $efectivo->id_metodo_pago : ($this->metodosPago->first()->id_metodo_pago ?? null);
+
+        $categoriaInsumo = CategoriaArticuloModel::where('nombre', 'INSUMOS SEMANAL')->first();
+        
+        if ($categoriaInsumo) {
+            $this->articulosInsumo = ArticuloModel::where('id_categoria_articulo', $categoriaInsumo->id_categoria_articulo)->get();
+        } else {
+            // Plan B por si borran la categoría: buscamos por nombre
+            $this->articulosInsumo = ArticuloModel::where('nombre', 'like', '%INSUMO%')->get();
+        }
+
+        // Seleccionar el primero por defecto
+        $this->articulo_seleccionado = $this->articulosInsumo->first()->id_articulo ?? null;
     }
 
     public function updatingSearch()
@@ -70,13 +85,21 @@ class ControlInsumos extends Component
 
         // 2. Lógica para COBRO financiero
         if ($estado === 'pagado') {
-            
-            // A. Buscar el artículo dinámicamente por nombre
-            $articulo = ArticuloModel::where('nombre', 'INSUMOS')->first();
-            if (!$articulo) {
-                $this->addError('general', 'El artículo "INSUMOS" no existe en el catálogo. Por favor, créalo o verifica el nombre.');
+
+            // A. Usar el artículo seleccionado en el Combo Box
+            if (!$this->articulo_seleccionado) {
+                $this->addError('general', 'Debe seleccionar un tipo de insumo a cobrar.');
                 return;
             }
+            
+            $articulo = ArticuloModel::find($this->articulo_seleccionado);
+            
+            if (!$articulo) {
+                $this->addError('general', 'El artículo seleccionado no es válido.');
+                return;
+            }
+            
+            // ¡ELIMINAMOS LA BÚSQUEDA FORZADA POR NOMBRE!
 
             // B. Validar método de pago
             if (!$this->metodo_pago_seleccionado) {
@@ -140,6 +163,7 @@ class ControlInsumos extends Component
                     'id_venta' => $venta->id_venta
                 ]);
 
+                // Armar datos del recibo
                 $estudiante = EstudianteModel::find($id_estudiante);
                 $this->datosRecibo = [
                     'nro_recibo' => str_pad($venta->id_venta, 6, '0', STR_PAD_LEFT),

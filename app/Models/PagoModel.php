@@ -25,8 +25,6 @@ class PagoModel extends Model
         return $this->belongsTo(EstudianteModel::class, 'id_estudiante', 'id_estudiante');
     }
 
-    // RELACIÓN POLIMÓRFICA
-    // Esto detecta automáticamente si el pago viene de un Plan, Modulo o Tarifa
     public function origen()
     {
         return $this->morphTo(__FUNCTION__, 'origen_type', 'origen_id');
