@@ -83,6 +83,7 @@ class ControlInsumos extends Component
 
         $existe = ControlInsumoModel::where('id_estudiante', $id_estudiante)
             ->whereBetween('fecha_semana', [$inicioSemana, $finSemana])
+            ->where('estado', '!=', 'anulado')
             ->first();
 
         if ($existe) {
@@ -309,7 +310,9 @@ class ControlInsumos extends Component
 
             // B. Revisar si la base de datos ya tiene un pago en esa semana
             $existe = ControlInsumoModel::where('id_estudiante', $this->estudianteMultiple->id_estudiante)
-                        ->whereBetween('fecha_semana', [$inicioSemana, $finSemana])->first();
+                        ->whereBetween('fecha_semana', [$inicioSemana, $finSemana])
+                        ->where('estado', '!=', 'anulado')
+                        ->first();
                         
             if($existe) {
                 $this->addError('multiple', "El alumno ya pagó la semana del " . Carbon::parse($inicioSemana)->format('d/m/Y'));
@@ -408,8 +411,8 @@ class ControlInsumos extends Component
         $finSemana = Carbon::parse($fecha)->endOfWeek()->format('Y-m-d');
 
         $estudiantes = EstudianteModel::with(['controlInsumos' => function($query) use ($inicioSemana, $finSemana) {
-                // 2. Buscamos registros en TODA esa semana, no solo en ese día
-                $query->whereBetween('fecha_semana', [$inicioSemana, $finSemana]);
+                $query->whereBetween('fecha_semana', [$inicioSemana, $finSemana])
+                    ->where('estado', '!=', 'anulado');
             }])
             ->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(nombre) LIKE ?', ["%{$search}%"])
@@ -420,5 +423,24 @@ class ControlInsumos extends Component
             ->paginate(15);
 
         return view('livewire.control-insumos', compact('estudiantes'));
+    }
+
+    public function forzarSincronizacionAnulados()
+    {
+        // 1. Buscamos todos los IDs de ventas que están anuladas en el POS
+        $ventasAnuladas = VentaModel::where('estado', 'anulada')->pluck('id_venta');
+        
+        // 2. Actualizamos los insumos vinculados a esas ventas que sigan diciendo "pagado"
+        $cantidad = ControlInsumoModel::whereIn('id_venta', $ventasAnuladas)
+            ->where('estado', '!=', 'anulado')
+            ->update(['estado' => 'anulado']);
+            
+        // 3. Mostramos el mensaje de éxito
+        $this->dispatch('toast', ['icon' => 'success', 'title' => "Se corrigieron $cantidad registros antiguos."]);
+        
+        // 4. Refrescamos el modal si está abierto
+        if ($this->estudianteHistorial) {
+            $this->abrirHistorial($this->estudianteHistorial->id_estudiante);
+        }
     }
 }

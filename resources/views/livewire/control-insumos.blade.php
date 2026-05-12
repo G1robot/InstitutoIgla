@@ -53,6 +53,19 @@
                         <input type="text" wire:model.live.debounce.300ms="search" 
                             class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500" placeholder="Buscar alumno...">
                     </div>
+
+                    {{-- BOTÓN PARCHE TEMPORAL (Borrar después) --}}
+                    <div class="relative w-full sm:w-auto">
+                        <button wire:click="forzarSincronizacionAnulados" wire:loading.attr="disabled"
+                            class="w-full px-4 py-2 bg-red-100 text-red-600 hover:bg-red-500 hover:text-white rounded-lg text-sm font-bold border border-red-300 transition shadow-sm flex items-center justify-center gap-2">
+                            <span wire:loading.remove wire:target="forzarSincronizacionAnulados">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Sincronizar Anulados
+                            </span>
+                            <span wire:loading wire:target="forzarSincronizacionAnulados">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
 

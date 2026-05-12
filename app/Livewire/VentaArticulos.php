@@ -369,6 +369,7 @@ class VentaArticulos extends Component
             if ($venta->pago) {
                 $venta->pago->update(['estado' => 'anulado']);
             }
+            \App\Models\ControlInsumoModel::where('id_venta', $idVenta)->update(['estado' => 'anulado']);
         });
 
         $this->cargarVentasDelDia(); // Refrescar lista
