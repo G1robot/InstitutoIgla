@@ -44,6 +44,12 @@ class ControlInsumos extends Component
     public $estudianteMultiple = null;
     public $fechasMultiple = [];
 
+    public $showModalAbono = false;
+    public $estudianteAbono = null;
+    public $controlInsumoActivo = null;
+    public $monto_a_abonar = 0;
+    public $deuda_actual = 0;
+
     public function mount()
     {
         $this->fecha_semana = Carbon::now()->format('Y-m-d');
@@ -442,5 +448,161 @@ class ControlInsumos extends Component
         if ($this->estudianteHistorial) {
             $this->abrirHistorial($this->estudianteHistorial->id_estudiante);
         }
+    }
+
+    public function abrirModalAbono($id_estudiante, $id_control_insumo = null)
+    {
+        $this->estudianteAbono = EstudianteModel::find($id_estudiante);
+        
+        if ($id_control_insumo) {
+            // Ya existe un abono previo, vamos a completarlo
+            $this->controlInsumoActivo = ControlInsumoModel::with('venta.pago')->find($id_control_insumo);
+            $pago = $this->controlInsumoActivo->venta->pago;
+            $this->deuda_actual = $pago->monto_total - $pago->monto_abonado;
+        } else {
+            // Es el primer abono de esta semana
+            if (!$this->articulo_seleccionado) {
+                $this->addError('general', 'Seleccione un tipo de Insumo arriba primero.');
+                return;
+            }
+            $articulo = ArticuloModel::find($this->articulo_seleccionado);
+            $this->controlInsumoActivo = null;
+            $this->deuda_actual = $articulo->precio; // La deuda inicial es el total del artículo
+        }
+
+        $this->monto_a_abonar = ''; // Limpiamos el input
+        $this->showModalAbono = true;
+    }
+
+    public function cerrarModalAbono()
+    {
+        $this->showModalAbono = false;
+        $this->estudianteAbono = null;
+        $this->controlInsumoActivo = null;
+        $this->monto_a_abonar = 0;
+    }
+
+    public function procesarAbono()
+    {
+        // 1. Validaciones
+        $monto = (float) $this->monto_a_abonar;
+        if ($monto <= 0 || $monto > $this->deuda_actual) {
+            $this->addError('abono', 'El monto debe ser mayor a 0 y no puede superar la deuda ('.$this->deuda_actual.' Bs).');
+            return;
+        }
+
+        if (!$this->metodo_pago_seleccionado) {
+            $this->addError('general', 'Debe seleccionar un método de pago.');
+            $this->cerrarModalAbono();
+            return;
+        }
+
+        $cajaAbierta = CajaModel::where('id_usuario', Auth::id())->where('estado', 'abierta')->first();
+        if (!$cajaAbierta) {
+            $this->addError('general', 'No tienes una caja abierta.');
+            $this->cerrarModalAbono();
+            return;
+        }
+
+        DB::transaction(function () use ($monto, $cajaAbierta) {
+            
+            // ESCENARIO A: Es el SEGUNDO abono (completando una deuda existente)
+            if ($this->controlInsumoActivo) {
+                $pago = $this->controlInsumoActivo->venta->pago;
+                $nuevo_abonado = $pago->monto_abonado + $monto;
+
+                // Registramos la entrada de dinero
+                TransaccionModel::create([
+                    'id_pago' => $pago->id_pago,
+                    'id_metodo_pago' => $this->metodo_pago_seleccionado,
+                    'id_caja' => $cajaAbierta->id_caja,
+                    'monto' => $monto,
+                    'fecha_transaccion' => Carbon::now()
+                ]);
+
+                // Verificamos si con este abono ya canceló todo
+                if ($nuevo_abonado >= $pago->monto_total) {
+                    $pago->update(['monto_abonado' => $nuevo_abonado, 'estado' => 'pagado']);
+                    $this->controlInsumoActivo->update(['estado' => 'pagado']);
+                } else {
+                    $pago->update(['monto_abonado' => $nuevo_abonado]); // Sigue en parcial
+                }
+
+                $this->ultimoIdVenta = $this->controlInsumoActivo->id_venta;
+
+            } 
+            // ESCENARIO B: Es el PRIMER abono (Nace la venta y la deuda)
+            else {
+                $articulo = ArticuloModel::find($this->articulo_seleccionado);
+
+                $venta = VentaModel::create([
+                    'id_estudiante' => $this->estudianteAbono->id_estudiante,
+                    'fecha_venta' => Carbon::now(),
+                    'monto_total' => $articulo->precio,
+                    'estado' => 'finalizada' // La venta es finalizada, el PAGO es parcial
+                ]);
+
+                DetalleVentaModel::create([
+                    'id_venta' => $venta->id_venta,
+                    'id_articulo' => $articulo->id_articulo,
+                    'cantidad' => 1,
+                    'precio_unitario' => $articulo->precio,
+                    'subtotal' => $articulo->precio
+                ]);
+
+                $pago = PagoModel::create([
+                    'origen_id' => $venta->id_venta,
+                    'origen_type' => VentaModel::class,
+                    'id_estudiante' => $this->estudianteAbono->id_estudiante,
+                    'fecha_vencimiento' => Carbon::now(),
+                    'fecha_pago' => Carbon::now(),
+                    'descripcion' => 'Insumo Semanal (' . $this->fecha_semana . ')',
+                    'monto_total' => $articulo->precio,
+                    'monto_abonado' => $monto,
+                    'estado' => 'parcial' // ¡MAGIA! Nace como deuda
+                ]);
+
+                TransaccionModel::create([
+                    'id_pago' => $pago->id_pago,
+                    'id_metodo_pago' => $this->metodo_pago_seleccionado,
+                    'id_caja' => $cajaAbierta->id_caja,
+                    'monto' => $monto,
+                    'fecha_transaccion' => Carbon::now()
+                ]);
+
+                ControlInsumoModel::create([
+                    'id_estudiante' => $this->estudianteAbono->id_estudiante,
+                    'fecha_semana' => $this->fecha_semana,
+                    'estado' => 'pendiente', // Sigue pendiente en el listado
+                    'id_venta' => $venta->id_venta
+                ]);
+
+                $this->ultimoIdVenta = $venta->id_venta;
+            }
+
+            // --- ARMAMOS EL RECIBO DE ABONO ---
+            // Reutilizamos tu vista PDF, pero le pasamos el "monto ingresado" como el Abono
+            $this->datosRecibo = [
+                'nro_recibo' => str_pad($this->ultimoIdVenta, 6, '0', STR_PAD_LEFT),
+                'estudiante' => $this->estudianteAbono->nombre . ' ' . $this->estudianteAbono->apellido,
+                'ci' => $this->estudianteAbono->ci,
+                'fecha' => Carbon::now()->format('d/m/Y H:i'),
+                'cajero' => Auth::user()->nombre ?? 'Administrador',
+                'items' => [
+                    [
+                        'cantidad' => 1,
+                        'nombre' => 'ABONO - Insumo Semanal (' . Carbon::parse($this->fecha_semana)->format('d/m') . ')',
+                        'precio' => $monto, // Reflejamos el abono en el PDF
+                        'subtotal' => $monto
+                    ]
+                ],
+                'total' => $monto,
+                'ingresado' => $monto,
+                'cambio' => 0,
+            ];
+        });
+
+        $this->cerrarModalAbono();
+        $this->showModalExito = true;
     }
 }

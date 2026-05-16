@@ -16,8 +16,20 @@
             <div class="lg:col-span-1">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-red-500 sticky top-4">
                     <h3 class="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
-                        <i class="fas fa-file-invoice-dollar text-red-500"></i> Nuevo Egreso
+                        @if($id_egreso_editando)
+                            <i class="fas fa-pen-to-square text-blue-500"></i> Editando Egreso #{{ $id_egreso_editando }}
+                        @else
+                            <i class="fas fa-file-invoice-dollar text-red-500"></i> Nuevo Egreso
+                        @endif
                     </h3>
+
+                    @error('caja') 
+                        <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm">
+                            <p class="text-red-700 font-bold text-sm">
+                                <i class="fa-solid fa-triangle-exclamation mr-1 text-lg"></i> {{ $message }}
+                            </p>
+                        </div>
+                    @enderror
 
                     <form wire:submit.prevent="guardarEgreso" class="space-y-4" autocomplete="off" wire:key="form-egreso-{{ $formKey }}">
                         
@@ -106,14 +118,23 @@
 
                         
 
-                        <div class="pt-4 border-t border-gray-100">
+                        <div class="pt-4 border-t border-gray-100 flex flex-col gap-2 mt-4">
                             <button type="submit" 
                                 wire:loading.attr="disabled" 
                                 wire:target="guardarEgreso"
-                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <span wire:loading.remove wire:target="guardarEgreso"><i class="fa-solid fa-arrow-right-from-bracket"></i> Registrar Salida de Dinero</span>
+                                class="w-full text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed {{ $id_egreso_editando ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700' }}">
+                                <span wire:loading.remove wire:target="guardarEgreso">
+                                    <i class="fa-solid {{ $id_egreso_editando ? 'fa-floppy-disk' : 'fa-arrow-right-from-bracket' }}"></i> 
+                                    {{ $id_egreso_editando ? 'Actualizar Registro' : 'Registrar Salida de Dinero' }}
+                                </span>
                                 <span wire:loading wire:target="guardarEgreso"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
                             </button>
+
+                            @if($id_egreso_editando)
+                                <button type="button" wire:click="cancelarEdicion" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2.5 rounded-xl transition-all">
+                                    Cancelar Edición
+                                </button>
+                            @endif
                         </div>
 
                     </form>
@@ -151,7 +172,7 @@
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
                                 @forelse($egresos as $egreso)
-                                    <tr class="hover:bg-red-50 transition-colors group">
+                                    <tr wire:key="egreso-{{ $egreso->id_egreso }}" class="hover:bg-red-50 transition-colors group">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div class="font-bold text-gray-700">{{ \Carbon\Carbon::parse($egreso->fecha_egreso)->format('d M, Y') }}</div>
                                             <div class="text-xs">{{ \Carbon\Carbon::parse($egreso->fecha_egreso)->format('H:i') }}</div>
@@ -191,6 +212,12 @@
                                         </td>
 
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <button wire:click="editar({{ $egreso->id_egreso }})" 
+                                                @click="window.scrollTo({ top: 0, behavior: 'smooth' });"
+                                                class="text-gray-400 hover:text-blue-600 transition p-2 rounded-lg hover:bg-blue-100 mr-1" title="Editar registro">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+
                                             <button wire:click="eliminar({{ $egreso->id_egreso }})" 
                                                 onclick="confirm('¿Estás seguro de eliminar este registro de egreso? Se restaurará el saldo en caja.') || event.stopImmediatePropagation()" 
                                                 class="text-gray-400 hover:text-red-600 transition p-2 rounded-lg hover:bg-red-100" title="Eliminar registro">

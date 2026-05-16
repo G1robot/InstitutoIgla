@@ -53,19 +53,6 @@
                         <input type="text" wire:model.live.debounce.300ms="search" 
                             class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500" placeholder="Buscar alumno...">
                     </div>
-
-                    {{-- BOTÓN PARCHE TEMPORAL (Borrar después) --}}
-                    <div class="relative w-full sm:w-auto">
-                        <button wire:click="forzarSincronizacionAnulados" wire:loading.attr="disabled"
-                            class="w-full px-4 py-2 bg-red-100 text-red-600 hover:bg-red-500 hover:text-white rounded-lg text-sm font-bold border border-red-300 transition shadow-sm flex items-center justify-center gap-2">
-                            <span wire:loading.remove wire:target="forzarSincronizacionAnulados">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> Sincronizar Anulados
-                            </span>
-                            <span wire:loading wire:target="forzarSincronizacionAnulados">
-                                <i class="fa-solid fa-spinner fa-spin"></i>
-                            </span>
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -106,12 +93,21 @@
                                                 <span class="bg-green-100 text-green-700 px-3 py-1.5 rounded-full text-xs font-bold border border-green-200">
                                                     <i class="fa-solid fa-check-double mr-1"></i> PAGADO
                                                 </span>
+                                            @elseif($registroActual->estado === 'pendiente' && $registroActual->id_venta)
+                                                {{-- MAGIA: Si está pendiente pero tiene Venta, significa que es un PAGO PARCIAL --}}
+                                                @php $pago = $registroActual->venta->pago; @endphp
+                                                <div class="flex flex-col items-center">
+                                                    <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-[10px] font-black tracking-widest border border-yellow-300 shadow-sm">
+                                                        <i class="fa-solid fa-circle-half-stroke mr-1"></i> ABONÓ
+                                                    </span>
+                                                    <span class="text-[10px] text-gray-500 font-bold mt-1">{{ number_format($pago->monto_abonado, 2) }} / {{ number_format($pago->monto_total, 2) }} Bs</span>
+                                                </div>
                                             @elseif($registroActual->estado === 'falta')
                                                 <span class="bg-red-100 text-red-700 px-3 py-1.5 rounded-full text-xs font-bold border border-red-200">
                                                     <i class="fa-solid fa-xmark mr-1"></i> FALTA
                                                 </span>
                                             @elseif($registroActual->estado === 'licencia')
-                                                <span class="bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-full text-xs font-bold border border-yellow-200">
+                                                <span class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-200">
                                                     <i class="fa-solid fa-hand-holding-medical mr-1"></i> LICENCIA
                                                 </span>
                                             @endif
@@ -128,6 +124,11 @@
                                                     class="bg-green-50 text-green-600 hover:bg-green-600 hover:text-white px-3 py-1.5 rounded-lg transition border border-green-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Cobrar Insumo">
                                                     <i class="fa-solid fa-sack-dollar"></i> Cobrar
                                                 </button>
+
+                                                <button wire:click="abrirModalAbono({{ $est->id_estudiante }})" wire:loading.attr="disabled"
+                                                    class="bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white px-2.5 py-1.5 rounded-lg transition border border-yellow-200 text-xs font-bold" title="Abonar (Pago Parcial)">
+                                                    <i class="fa-solid fa-coins"></i> Abonar
+                                                </button>
                                                 
                                                 <button wire:click="registrarEstado({{ $est->id_estudiante }}, 'falta')" wire:loading.attr="disabled"
                                                     class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition border border-red-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Marcar Falta">
@@ -137,6 +138,12 @@
                                                 <button wire:click="registrarEstado({{ $est->id_estudiante }}, 'licencia')" wire:loading.attr="disabled"
                                                     class="bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white px-3 py-1.5 rounded-lg transition border border-yellow-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Licencia">
                                                     <i class="fa-solid fa-notes-medical"></i> Lic.
+                                                </button>
+                                            @elseif($registroActual->estado === 'pendiente' && $registroActual->id_venta)
+                                                {{-- Ya dio un abono, botón para COMPLETAR EL PAGO --}}
+                                                <button wire:click="abrirModalAbono({{ $est->id_estudiante }}, {{ $registroActual->id_control_insumo }})" wire:loading.attr="disabled"
+                                                    class="bg-green-500 text-white hover:bg-green-700 px-3 py-1.5 rounded-lg transition shadow-md text-xs font-bold animate-pulse" title="Completar deuda">
+                                                    <i class="fa-solid fa-hand-holding-dollar"></i> Completar Pago
                                                 </button>
                                             @endif
 
@@ -199,11 +206,15 @@
                                     </div>
                                     <div>
                                         @if($historial->estado === 'pagado')
-                                            <span class="text-green-600 font-bold text-xs bg-green-100 px-2 py-1 rounded"><i class="fa-solid fa-check"></i> Pagado</span>
+                                            <span class="text-green-600 font-bold text-xs bg-green-100 px-2 py-1 rounded border border-green-200"><i class="fa-solid fa-check"></i> Pagado</span>
+                                        @elseif($historial->estado === 'pendiente' && $historial->id_venta)
+                                            <span class="text-yellow-700 font-bold text-xs bg-yellow-100 px-2 py-1 rounded border border-yellow-300"><i class="fa-solid fa-circle-half-stroke"></i> Abono Parcial</span>
                                         @elseif($historial->estado === 'falta')
-                                            <span class="text-red-600 font-bold text-xs bg-red-100 px-2 py-1 rounded"><i class="fa-solid fa-xmark"></i> Falta</span>
+                                            <span class="text-red-600 font-bold text-xs bg-red-100 px-2 py-1 rounded border border-red-200"><i class="fa-solid fa-xmark"></i> Falta</span>
+                                        @elseif($historial->estado === 'licencia')
+                                            <span class="text-blue-600 font-bold text-xs bg-blue-100 px-2 py-1 rounded border border-blue-200"><i class="fa-solid fa-hand-holding-medical"></i> Licencia</span>
                                         @else
-                                            <span class="text-yellow-600 font-bold text-xs bg-yellow-100 px-2 py-1 rounded"><i class="fa-solid fa-hand-holding-medical"></i> Licencia</span>
+                                            <span class="text-gray-500 font-bold text-xs bg-gray-100 px-2 py-1 rounded"><i class="fa-solid fa-clock"></i> Pendiente</span>
                                         @endif
                                     </div>
                                 </div>
@@ -273,6 +284,52 @@
                     <button wire:click="procesarCobroMultiple" wire:loading.attr="disabled" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50">
                         <span wire:loading.remove wire:target="procesarCobroMultiple"><i class="fa-solid fa-cash-register"></i> Procesar y Generar Recibo</span>
                         <span wire:loading wire:target="procesarCobroMultiple"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endif
+        {{-- MODAL PARA ABONOS / PAGOS PARCIALES --}}
+        @if($showModalAbono)
+        <div class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" wire:click="cerrarModalAbono"></div>
+
+                <div class="relative inline-block w-full max-w-sm p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl animate-fade-in-up">
+                    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
+                        <div>
+                            <h3 class="text-lg font-black text-gray-800 uppercase">
+                                <i class="fa-solid fa-coins text-yellow-500 mr-2"></i> {{ $controlInsumoActivo ? 'Completar Deuda' : 'Registrar Abono' }}
+                            </h3>
+                            <p class="text-sm text-gray-500">{{ $estudianteAbono->nombre ?? '' }}</p>
+                        </div>
+                        <button wire:click="cerrarModalAbono" class="text-gray-400 hover:text-red-500 transition">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-5 flex justify-between items-center">
+                        <div>
+                            <span class="block text-xs font-bold text-yellow-700 uppercase">Deuda Actual</span>
+                            <span class="text-2xl font-black text-yellow-800">{{ number_format($deuda_actual, 2) }} <span class="text-sm">Bs</span></span>
+                        </div>
+                        <i class="fa-solid fa-file-invoice-dollar text-3xl text-yellow-300"></i>
+                    </div>
+
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Monto que está pagando AHORA:</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 font-bold">Bs</span>
+                            </div>
+                            <input type="number" step="0.50" wire:model="monto_a_abonar" class="w-full pl-10 pr-3 py-3 border-2 border-gray-300 rounded-xl text-lg font-black text-gray-800 focus:ring-yellow-500 focus:border-yellow-500 transition shadow-inner" placeholder="0.00">
+                        </div>
+                        @error('abono') <span class="text-red-500 text-xs font-bold mt-2 block"><i class="fa-solid fa-triangle-exclamation"></i> {{ $message }}</span> @enderror
+                    </div>
+
+                    <button wire:click="procesarAbono" wire:loading.attr="disabled" class="w-full bg-gray-800 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50">
+                        <span wire:loading.remove wire:target="procesarAbono">Registrar Abono en Caja</span>
+                        <span wire:loading wire:target="procesarAbono"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
                     </button>
                 </div>
             </div>

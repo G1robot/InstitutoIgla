@@ -18,8 +18,21 @@
             <div class="lg:col-span-1">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-green-500 sticky top-4">
                     <h3 class="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
-                        <i class="fa-solid fa-hand-holding-dollar text-green-500"></i> Nuevo Ingreso
+                        @if($id_ingreso_editando)
+                            <i class="fas fa-pen-to-square text-blue-500"></i> Editando Ingreso #{{ $id_ingreso_editando }}
+                        @else
+                            <i class="fa-solid fa-hand-holding-dollar text-green-500"></i> Nuevo Ingreso
+                        @endif
                     </h3>
+
+                    {{-- ALERTA DE CAJA CERRADA --}}
+                    @error('caja') 
+                        <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm">
+                            <p class="text-red-700 font-bold text-sm">
+                                <i class="fa-solid fa-triangle-exclamation mr-1 text-lg"></i> {{ $message }}
+                            </p>
+                        </div>
+                    @enderror
 
                     <form wire:submit.prevent="guardarIngreso" class="space-y-4" autocomplete="off" wire:key="form-ingreso-{{ $formKey }}">
                         
@@ -81,12 +94,21 @@
                             <input type="datetime-local" wire:model="fecha_ingreso" class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm text-gray-600">
                         </div>
 
-                        <div class="pt-4 border-t border-gray-100">
+                        <div class="pt-4 border-t border-gray-100 flex flex-col gap-2 mt-4">
                             <button type="submit" wire:loading.attr="disabled" wire:target="guardarIngreso"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                                <span wire:loading.remove wire:target="guardarIngreso"><i class="fa-solid fa-arrow-right-to-bracket"></i> Registrar Ingreso</span>
+                                class="w-full text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed {{ $id_ingreso_editando ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700' }}">
+                                <span wire:loading.remove wire:target="guardarIngreso">
+                                    <i class="fa-solid {{ $id_ingreso_editando ? 'fa-floppy-disk' : 'fa-arrow-right-to-bracket' }}"></i> 
+                                    {{ $id_ingreso_editando ? 'Actualizar Ingreso' : 'Registrar Ingreso' }}
+                                </span>
                                 <span wire:loading wire:target="guardarIngreso"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
                             </button>
+
+                            @if($id_ingreso_editando)
+                                <button type="button" wire:click="cancelarEdicion" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2.5 rounded-xl transition-all">
+                                    Cancelar Edición
+                                </button>
+                            @endif
                         </div>
                     </form>
                 </div>
@@ -137,6 +159,12 @@
                                             <span class="text-xs font-bold text-green-400">Bs</span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <button wire:click="editar({{ $ing->id_ingreso }})" 
+                                                @click="window.scrollTo({ top: 0, behavior: 'smooth' });"
+                                                class="text-gray-400 hover:text-blue-600 transition p-2 rounded-lg hover:bg-blue-100 mr-1" title="Editar registro">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+
                                             <button wire:click="eliminar({{ $ing->id_ingreso }})" 
                                                 onclick="confirm('¿Eliminar este ingreso? Se descontará el saldo de caja.') || event.stopImmediatePropagation()" 
                                                 class="text-gray-400 hover:text-red-600 transition p-2 rounded-lg hover:bg-red-100">
