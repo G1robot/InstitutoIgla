@@ -1,26 +1,19 @@
 <div class="px-4 pb-8">
-
     {{-- ========================================== --}}
     {{-- SISTEMA WEB (SE OCULTA AL IMPRIMIR)        --}}
     {{-- ========================================== --}}
     <div class="ocultar-al-imprimir">
-        
         <div class="mb-8 border-l-4 border-red-500 pl-4">
             <h2 class="text-2xl font-black text-gray-800 tracking-tight">REGISTRO DE GASTOS Y COMPRAS</h2>
             <p class="text-sm text-gray-500 mt-1">Registra las salidas de dinero (egresos) de la caja actual.</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
             {{-- COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO --}}
             <div class="lg:col-span-1">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-red-500 sticky top-4">
                     <h3 class="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
-                        @if($id_egreso_editando)
-                            <i class="fas fa-pen-to-square text-blue-500"></i> Editando Egreso #{{ $id_egreso_editando }}
-                        @else
-                            <i class="fas fa-file-invoice-dollar text-red-500"></i> Nuevo Egreso
-                        @endif
+                        <i class="fas fa-file-invoice-dollar text-red-500"></i> Nuevo Egreso
                     </h3>
 
                     @error('caja') 
@@ -30,27 +23,23 @@
                             </p>
                         </div>
                     @enderror
-
                     <form wire:submit.prevent="guardarEgreso" class="space-y-4" autocomplete="off" wire:key="form-egreso-{{ $formKey }}">
-                        
                         {{-- Concepto --}}
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Concepto / Razón Principal *</label>
                             <textarea wire:model="concepto" rows="2" autocomplete="off"
-                                class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-shadow" 
+                                class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-shadow"
                                 placeholder="Ej: Mantenimiento de computadoras..."></textarea>
                             @error('concepto') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
-
                         {{-- Descripción Opcional --}}
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Observaciones Extras</label>
                             <textarea wire:model="descripcion" rows="2" autocomplete="off"
-                                class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-shadow text-sm resize-none bg-gray-50 focus:bg-white" 
+                                class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-shadow text-sm resize-none bg-gray-50 focus:bg-white"
                                 placeholder="Detalles técnicos, materiales, etc..."></textarea>
                             @error('descripcion') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
-
                         {{-- Monto y Método --}}
                         <div class="grid grid-cols-2 gap-4 bg-red-50 p-3 rounded-lg border border-red-100">
                             <div>
@@ -69,10 +58,12 @@
                                 <select wire:model="id_metodo_pago" class="w-full border-none rounded-md py-2 px-2 focus:ring-2 focus:ring-red-500 text-sm font-bold text-gray-700 shadow-sm">
                                     <option value="">Seleccione...</option>
                                     @foreach($metodosPago as $metodo)
+
                                         <option value="{{ $metodo->id_metodo_pago }}">
                                             {{ $metodo->nombre }} {{ $metodo->es_efectivo ? '(Caja)' : '(Banco)' }}
                                         </option>
                                     @endforeach
+
                                 </select>
                                 @error('id_metodo_pago') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
@@ -85,8 +76,10 @@
                                 <select wire:model="id_proveedor" class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-shadow text-sm bg-white">
                                     <option value="">Sin proveedor / Varios</option>
                                     @foreach($proveedores as $prov)
+
                                         <option value="{{ $prov->id_proveedor }}">{{ $prov->nombre_empresa }}</option>
                                     @endforeach
+
                                 </select>
                                 <button type="button" wire:click="openModalProveedor" class="bg-gray-100 border border-gray-300 px-4 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-300 font-bold transition-colors" title="Crear Nuevo Proveedor">
                                     <i class="fa-solid fa-plus"></i>
@@ -94,7 +87,9 @@
                             </div>
                         </div>
 
+
                         {{-- Detalles Factura --}}
+
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Comprobante</label>
@@ -110,36 +105,27 @@
                             </div>
                         </div>
 
+
                         {{-- Fecha y Hora --}}
+
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Fecha y Hora</label>
                             <input type="datetime-local" wire:model="fecha_egreso" class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-shadow text-sm text-gray-600">
                         </div>
 
-                        
-
-                        <div class="pt-4 border-t border-gray-100 flex flex-col gap-2 mt-4">
-                            <button type="submit" 
-                                wire:loading.attr="disabled" 
+                        <div class="pt-4 border-t border-gray-100">
+                            <button type="submit"
+                                wire:loading.attr="disabled"
                                 wire:target="guardarEgreso"
-                                class="w-full text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed {{ $id_egreso_editando ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700' }}">
-                                <span wire:loading.remove wire:target="guardarEgreso">
-                                    <i class="fa-solid {{ $id_egreso_editando ? 'fa-floppy-disk' : 'fa-arrow-right-from-bracket' }}"></i> 
-                                    {{ $id_egreso_editando ? 'Actualizar Registro' : 'Registrar Salida de Dinero' }}
-                                </span>
+                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span wire:loading.remove wire:target="guardarEgreso"><i class="fa-solid fa-arrow-right-from-bracket"></i> Registrar Salida de Dinero</span>
                                 <span wire:loading wire:target="guardarEgreso"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
                             </button>
-
-                            @if($id_egreso_editando)
-                                <button type="button" wire:click="cancelarEdicion" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2.5 rounded-xl transition-all">
-                                    Cancelar Edición
-                                </button>
-                            @endif
                         </div>
-
                     </form>
                 </div>
             </div>
+
 
             {{-- COLUMNA DERECHA: LISTADO DE EGRESOS --}}
             <div class="lg:col-span-2">
@@ -153,7 +139,8 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400"></i>
                         </div>
-                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="Buscar gasto..." 
+                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="Buscar gasto..."
+
                             class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm bg-gray-50 focus:bg-white transition-shadow">
                     </div>
                 </div>
@@ -172,32 +159,38 @@
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
                                 @forelse($egresos as $egreso)
-                                    <tr wire:key="egreso-{{ $egreso->id_egreso }}" class="hover:bg-red-50 transition-colors group">
+
+                                    <tr class="hover:bg-red-50 transition-colors group">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div class="font-bold text-gray-700">{{ \Carbon\Carbon::parse($egreso->fecha_egreso)->format('d M, Y') }}</div>
                                             <div class="text-xs">{{ \Carbon\Carbon::parse($egreso->fecha_egreso)->format('H:i') }}</div>
                                         </td>
-                                        
+                                       
+
                                         <td class="px-6 py-4">
                                             <div class="text-sm font-bold text-gray-900 mb-1 leading-tight">{{ $egreso->concepto }}</div>
                                             @if($egreso->descripcion)
                                                 <div class="text-xs text-gray-500 mb-2 italic">{{ Str::limit($egreso->descripcion, 80) }}</div>
                                             @endif
+
                                             <div class="flex flex-wrap items-center gap-2 mt-1">
                                                 <span class="text-[10px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded border border-gray-200">
                                                     <i class="fas fa-building mr-1"></i> {{ $egreso->proveedor->nombre_empresa ?? 'Sin Proveedor' }}
                                                 </span>
-                                                @if($egreso->nro_factura) 
+                                                @if($egreso->nro_factura)
                                                     <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100">
                                                         {{ ucfirst($egreso->tipo_comprobante) }}: {{ $egreso->nro_factura }}
-                                                    </span> 
+                                                    </span>
                                                 @else
+
                                                     <span class="text-[10px] font-bold bg-gray-50 text-gray-500 px-2 py-0.5 rounded border border-gray-200">
                                                         {{ ucfirst($egreso->tipo_comprobante) }}
                                                     </span>
                                                 @endif
+
                                             </div>
                                         </td>
+
 
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2.5 py-1 inline-flex text-xs font-bold rounded-full border {{ $egreso->metodoPago->es_efectivo ? 'bg-green-50 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200' }}">
@@ -206,26 +199,29 @@
                                             </span>
                                         </td>
 
+
                                         <td class="px-6 py-4 whitespace-nowrap text-right">
                                             <span class="text-base font-black text-red-600">-{{ number_format($egreso->monto, 2) }}</span>
                                             <span class="text-xs font-bold text-red-400">Bs</span>
                                         </td>
 
+
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <button wire:click="editar({{ $egreso->id_egreso }})" 
-                                                @click="window.scrollTo({ top: 0, behavior: 'smooth' });"
-                                                class="text-gray-400 hover:text-blue-600 transition p-2 rounded-lg hover:bg-blue-100 mr-1" title="Editar registro">
-                                                <i class="fas fa-edit"></i>
+                                            <button wire:click="verDetalle({{ $egreso->id_egreso }})" 
+                                                class="text-gray-400 hover:text-blue-600 transition p-2 rounded-lg hover:bg-blue-100 mr-1" title="Ver Detalles">
+                                                <i class="fas fa-eye"></i>
                                             </button>
 
-                                            <button wire:click="eliminar({{ $egreso->id_egreso }})" 
-                                                onclick="confirm('¿Estás seguro de eliminar este registro de egreso? Se restaurará el saldo en caja.') || event.stopImmediatePropagation()" 
+                                            <button wire:click="eliminar({{ $egreso->id_egreso }})"
+                                                onclick="confirm('¿Estás seguro de eliminar este registro de egreso? Se restaurará el saldo en caja.') || event.stopImmediatePropagation()"
+
                                                 class="text-gray-400 hover:text-red-600 transition p-2 rounded-lg hover:bg-red-100" title="Eliminar registro">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </td>
                                     </tr>
                                 @empty
+
                                     <tr>
                                         <td colspan="5" class="text-center py-12 text-gray-400">
                                             <i class="fa-solid fa-file-invoice-dollar text-4xl mb-3 text-gray-300"></i>
@@ -233,6 +229,7 @@
                                         </td>
                                     </tr>
                                 @endforelse
+
                             </tbody>
                         </table>
                     </div>
@@ -241,6 +238,7 @@
                             {{ $egresos->links() }}
                         </div>
                     @endif
+
                 </div>
             </div>
         </div>
@@ -259,12 +257,14 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Empresa / Beneficiario *</label>
                             <input type="text" wire:model="nuevo_proveedor_nombre" autocomplete="off" placeholder="Ej: Librería Paris"
+
                                 class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-shadow">
                             @error('nuevo_proveedor_nombre') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">NIT / CI (Opcional)</label>
                             <input type="text" wire:model="nuevo_proveedor_nit" autocomplete="off" placeholder="Ej: 12345678"
+
                                 class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-shadow">
                         </div>
                         <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
@@ -288,26 +288,96 @@
                 </div>
                 <h3 class="text-2xl font-black text-gray-800 mb-2">¡Egreso Registrado!</h3>
                 <p class="text-gray-500 mb-8 text-sm">El comprobante de salida de dinero fue guardado exitosamente.</p>
-                
+               
+
                 <div class="flex flex-col gap-3">
                     <button onclick="window.print()" class="bg-gray-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition w-full flex items-center justify-center gap-2 shadow-lg">
                         <i class="fa-solid fa-print"></i> Imprimir Comprobante
                     </button>
+
 
                     <button wire:click="descargarReciboPdf" wire:loading.attr="disabled" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition w-full flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
                         <span wire:loading.remove wire:target="descargarReciboPdf"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</span>
                         <span wire:loading wire:target="descargarReciboPdf"><i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...</span>
                     </button>
 
+
                     <button wire:click="cerrarModalExito" class="bg-red-50 text-red-600 px-6 py-3 rounded-xl font-bold hover:bg-red-100 transition w-full">
                         Nuevo Egreso
+
                     </button>
                 </div>
             </div>
         </div>
         @endif
 
-    </div> {{-- FIN DEL DIV OCULTAR-AL-IMPRIMIR --}}
+        {{-- MODAL VER DETALLES EGRESO --}}
+        @if($showModalDetalle && $egresoSeleccionado)
+        <div class="fixed inset-0 z-50 overflow-y-auto animate-fade-in-down">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" wire:click="cerrarModalDetalle"></div>
+
+                <div class="relative inline-block w-full max-w-lg p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+                    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
+                        <h3 class="text-lg font-black text-gray-800 uppercase">
+                            <i class="fas fa-file-invoice-dollar text-red-500 mr-2"></i> Detalle de Egreso #{{ str_pad($egresoSeleccionado->id_egreso, 5, '0', STR_PAD_LEFT) }}
+                        </h3>
+                        <button wire:click="cerrarModalDetalle" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase">Monto</span>
+                                <span class="text-xl font-black text-red-600">-{{ number_format($egresoSeleccionado->monto, 2) }} Bs</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase">Fecha y Hora</span>
+                                <span class="text-sm font-bold text-gray-800">{{ \Carbon\Carbon::parse($egresoSeleccionado->fecha_egreso)->format('d/m/Y H:i') }}</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Concepto Principal</span>
+                            <p class="text-sm text-gray-800 font-bold bg-white border border-gray-200 p-3 rounded-lg">{{ $egresoSeleccionado->concepto }}</p>
+                        </div>
+
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Observaciones / Descripción Larga</span>
+                            <div class="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg max-h-40 overflow-y-auto custom-scrollbar whitespace-pre-wrap">
+                                {{ $egresoSeleccionado->descripcion ?: 'Sin observaciones extra.' }}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Método de Pago</span>
+                                <span class="text-xs font-bold bg-gray-100 text-gray-700 px-2 py-1 rounded">{{ $egresoSeleccionado->metodoPago->nombre ?? 'N/A' }}</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Comprobante</span>
+                                <span class="text-xs font-bold bg-gray-100 text-gray-700 px-2 py-1 rounded uppercase">{{ $egresoSeleccionado->tipo_comprobante }} {{ $egresoSeleccionado->nro_factura ? '#'.$egresoSeleccionado->nro_factura : '' }}</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Proveedor / Beneficiario</span>
+                            <span class="text-xs font-bold text-gray-700"><i class="fas fa-building text-gray-400 mr-1"></i> {{ $egresoSeleccionado->proveedor->nombre_empresa ?? 'Sin Proveedor Específico' }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-100">
+                        <button wire:click="cerrarModalDetalle" class="w-full bg-gray-800 text-white font-bold py-2.5 rounded-xl hover:bg-black transition-all">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+
+
+    </div> {{-- FIN DEL DIV OCULTAR-AL-IMPRIMIR --}} 
+
 
     {{-- ========================================== --}}
     {{-- RECIBO PARA IMPRIMIR (ESPECÍFICO DE EGRESOS)--}}

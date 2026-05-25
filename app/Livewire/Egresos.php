@@ -12,6 +12,7 @@ use App\Models\CajaModel;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+
 class Egresos extends Component
 {
     use WithPagination;
@@ -19,9 +20,7 @@ class Egresos extends Component
     public $formKey = 1;
     public $datosRecibo = null;
     public $showModalExito = false;
-
-    public $id_egreso_editando = null;
-    
+   
     public $concepto;
     public $descripcion;
     public $monto;
@@ -31,25 +30,25 @@ class Egresos extends Component
     public $nro_factura;
     public $tipo_comprobante = 'recibo';
 
-    
     public $metodosPago = [];
     public $proveedores = [];
 
-    
     public $search = '';
     public $mesFilter;
 
-    
     public $showModalProveedor = false;
     public $nuevo_proveedor_nombre = '';
     public $nuevo_proveedor_nit = '';
 
+    public $egresoSeleccionado = null;
+    public $showModalDetalle = false;
+
     public function mount()
     {
-        $this->fecha_egreso = Carbon::now()->format('Y-m-d\TH:i'); 
+        $this->fecha_egreso = Carbon::now()->format('Y-m-d\TH:i');
         $this->metodosPago = MetodoPagoModel::where('activo', true)->get();
         $this->cargarProveedores();
-        $this->mesFilter = Carbon::now()->format('Y-m'); 
+        $this->mesFilter = Carbon::now()->format('Y-m');
     }
 
     public function cargarProveedores()
@@ -82,40 +81,8 @@ class Egresos extends Component
         $this->formKey++;
     }
 
-    public function editar($id)
-    {
-        $egreso = EgresoModel::find($id);
-
-        $this->id_egreso_editando = $egreso->id_egreso;
-        $this->concepto = $egreso->concepto;
-        $this->descripcion = $egreso->descripcion;
-        $this->monto = $egreso->monto;
-        $this->fecha_egreso = Carbon::parse($egreso->fecha_egreso)->format('Y-m-d\TH:i');
-        $this->id_proveedor = $egreso->id_proveedor;
-        $this->id_metodo_pago = $egreso->id_metodo_pago;
-        $this->nro_factura = $egreso->nro_factura;
-        $this->tipo_comprobante = $egreso->tipo_comprobante;
-
-        $this->formKey++;
-    }
-
-    public function cancelarEdicion()
-    {
-        $this->id_egreso_editando = null;
-        $this->limpiarDatos();
-    }
-    
     public function guardarEgreso()
     {
-        $cajaAbierta = CajaModel::where('id_usuario', Auth::id())
-                            ->where('estado', 'abierta')
-                            ->first();
-
-        if (!$cajaAbierta) {
-            $this->addError('caja', '¡Alerta! No tienes una caja abierta en este momento. Por favor, ve a "Operación Diaria" y abre tu caja antes de registrar o editar movimientos.');
-            return;
-        }
-
         $this->validate([
             'concepto' => 'required|string|max:255',
             'monto' => 'required|numeric|min:0.1',
@@ -125,34 +92,25 @@ class Egresos extends Component
             'id_proveedor' => 'nullable|exists:proveedores,id_proveedor',
         ]);
 
-        if ($this->id_egreso_editando) {
-            $egreso = EgresoModel::find($this->id_egreso_editando);
-            $egreso->update([
-                'concepto' => $this->concepto,
-                'descripcion' => $this->descripcion,
-                'monto' => $this->monto,
-                'fecha_egreso' => $this->fecha_egreso,
-                'id_proveedor' => $this->id_proveedor ?: null,
-                'id_metodo_pago' => $this->id_metodo_pago,
-                'nro_factura' => $this->nro_factura,
-                'tipo_comprobante' => $this->tipo_comprobante,
-            ]);
-            
-            $this->id_egreso_editando = null;
-
-        } else {
-            $egreso = EgresoModel::create([
-                'id_caja' => $cajaAbierta->id_caja,
-                'concepto' => $this->concepto,
-                'descripcion' => $this->descripcion,
-                'monto' => $this->monto,
-                'fecha_egreso' => $this->fecha_egreso,
-                'id_proveedor' => $this->id_proveedor ?: null, 
-                'id_metodo_pago' => $this->id_metodo_pago,
-                'nro_factura' => $this->nro_factura,
-                'tipo_comprobante' => $this->tipo_comprobante,
-            ]);
+        $cajaAbierta = CajaModel::where('id_usuario', Auth::id())
+                            ->where('estado', 'abierta')
+                            ->first();
+        if (!$cajaAbierta) {
+            $this->addError('caja', '¡Alerta! No tienes una caja abierta en este momento. Por favor, ve a "Operación Diaria" y abre tu caja antes de registrar o editar movimientos.');
+            return; // Detiene la ejecución aquí mismo
         }
+
+        $egreso = EgresoModel::create([
+            'id_caja' => $cajaAbierta->id_caja,
+            'concepto' => $this->concepto,
+            'descripcion' => $this->descripcion,
+            'monto' => $this->monto,
+            'fecha_egreso' => $this->fecha_egreso,
+            'id_proveedor' => $this->id_proveedor ?: null,
+            'id_metodo_pago' => $this->id_metodo_pago,
+            'nro_factura' => $this->nro_factura,
+            'tipo_comprobante' => $this->tipo_comprobante,
+        ]);
 
         $egreso->load(['proveedor', 'metodoPago']);
 
@@ -166,11 +124,8 @@ class Egresos extends Component
             'monto' => $this->monto,
             'metodo_pago' => $egreso->metodoPago->nombre,
         ];
-
-        
         $this->limpiarDatos();
         $this->showModalExito = true;
-        
     }
 
     public function cerrarModalExito()
@@ -184,7 +139,6 @@ class Egresos extends Component
         EgresoModel::destroy($id);
     }
 
-
     public function openModalProveedor() {
         $this->reset(['nuevo_proveedor_nombre', 'nuevo_proveedor_nit']);
         $this->showModalProveedor = true;
@@ -194,16 +148,15 @@ class Egresos extends Component
         $this->validate([
             'nuevo_proveedor_nombre' => 'required|min:3',
         ]);
-
         $prov = ProveedorModel::create([
             'nombre_empresa' => $this->nuevo_proveedor_nombre,
             'nit_ci' => $this->nuevo_proveedor_nit
         ]);
 
         $this->cargarProveedores();
-        $this->id_proveedor = $prov->id_proveedor; 
+        $this->id_proveedor = $prov->id_proveedor;
         $this->showModalProveedor = false;
-        
+
         session()->flash('success', 'Proveedor creado.');
     }
 
@@ -212,7 +165,6 @@ class Egresos extends Component
         if (!$this->datosRecibo) {
             return;
         }
-
         $pdf = Pdf::loadView('livewire.pdf.egreso-recibo-pdf', [
             'datosRecibo' => $this->datosRecibo
         ]);
@@ -224,5 +176,18 @@ class Egresos extends Component
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, $nombreArchivo);
+    }
+
+    public function verDetalle($id)
+    {
+        // Traemos el egreso con sus relaciones
+        $this->egresoSeleccionado = EgresoModel::with(['proveedor', 'metodoPago'])->find($id);
+        $this->showModalDetalle = true;
+    }
+
+    public function cerrarModalDetalle()
+    {
+        $this->showModalDetalle = false;
+        $this->egresoSeleccionado = null;
     }
 }

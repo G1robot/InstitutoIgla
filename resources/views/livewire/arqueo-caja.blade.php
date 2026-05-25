@@ -41,10 +41,26 @@
                     Ingresos: +{{ number_format($ingresosBanco, 2) }} | Egresos: -{{ number_format($egresosBanco, 2) }}
                 </div>
             </div>
-            <div class="bg-white border-2 border-gray-800 rounded-xl shadow-lg p-6 text-gray-800">
-                <h3 class="text-gray-500 font-bold mb-1 uppercase text-sm">Total Movimiento del Día</h3>
-                <div class="text-4xl font-black mb-2">{{ number_format($totalGeneral, 2) }} Bs</div>
-                <div class="text-sm font-bold text-gray-400">Suma de Caja + Banco</div>
+            <div class="bg-white border-2 border-gray-800 rounded-xl shadow-lg p-6 text-gray-800 flex flex-col justify-between">
+                
+                {{-- Título y Número Principal (Igual a las otras tarjetas) --}}
+                <div>
+                    <h3 class="text-gray-500 font-bold mb-1 uppercase text-sm">Saldo Neto Final (Total)</h3>
+                    <div class="text-4xl font-black mb-2">{{ number_format($totalGeneral, 2) }} <span class="text-2xl text-gray-400 font-bold">Bs</span></div>
+                </div>
+                
+                {{-- Desglose en barra inferior --}}
+                <div class="flex justify-between items-center bg-gray-50 border border-gray-200 rounded px-3 py-2 mt-1">
+                    <div class="text-xs font-bold tracking-wide">
+                        <span class="text-gray-500 uppercase">Bruto:</span> 
+                        <span class="text-green-600">+{{ number_format($ingresosEfectivo + $ingresosBanco, 2) }}</span>
+                    </div>
+                    <div class="text-xs font-bold tracking-wide text-right">
+                        <span class="text-gray-500 uppercase">Gastos:</span> 
+                        <span class="text-red-500">-{{ number_format($egresosEfectivo + $egresosBanco, 2) }}</span>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -78,16 +94,40 @@
     {{-- 3.1 Resumen de Saldos --}}
     <div class="mb-8 bg-white print:bg-transparent rounded-xl shadow-sm print:shadow-none border border-gray-100 print:border-none p-5 print:p-0">
         <h3 class="font-bold border-b border-gray-400 mb-4 uppercase text-sm bg-gray-50 print:bg-gray-100 p-2 rounded print:rounded-none">1. Resumen de Saldos</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm px-2">
-            <div class="bg-gray-50 print:bg-transparent p-4 print:p-0 rounded-lg">
-                <p class="flex justify-between mb-1"><span class="font-bold text-gray-600">Total Ingresos Efectivo:</span> <span class="font-mono">{{ number_format($ingresosEfectivo, 2) }} Bs</span></p>
-                <p class="flex justify-between mb-2 text-red-600"><span class="font-bold">Total Egresos Efectivo:</span> <span class="font-mono">- {{ number_format($egresosEfectivo, 2) }} Bs</span></p>
-                <p class="flex justify-between font-black text-base mt-2 border-t-2 border-gray-800 pt-2 text-green-700"><span>SALDO CAJA FÍSICA:</span> <span>{{ number_format($saldoCajaFisica, 2) }} Bs</span></p>
+        
+        {{-- Desglose Efectivo / Banco --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm px-2 mb-6">
+            <div class="bg-gray-50 print:bg-transparent p-4 print:p-0 rounded-lg print:border-r print:border-gray-400 print:pr-4">
+                <p class="flex justify-between mb-1"><span class="font-bold text-gray-600 print:text-black">Total Ingresos Efectivo:</span> <span class="font-mono">+ {{ number_format($ingresosEfectivo, 2) }} Bs</span></p>
+                <p class="flex justify-between mb-2 text-red-600 print:text-black"><span class="font-bold">Total Egresos Efectivo:</span> <span class="font-mono">- {{ number_format($egresosEfectivo, 2) }} Bs</span></p>
+                <p class="flex justify-between font-black text-base mt-2 border-t-2 border-gray-800 pt-2 text-green-700 print:text-black"><span>SALDO CAJA FÍSICA:</span> <span>{{ number_format($saldoCajaFisica, 2) }} Bs</span></p>
             </div>
             <div class="bg-gray-50 print:bg-transparent p-4 print:p-0 rounded-lg">
-                <p class="flex justify-between mb-1"><span class="font-bold text-gray-600">Total Ingresos Banco (QR):</span> <span class="font-mono">{{ number_format($ingresosBanco, 2) }} Bs</span></p>
-                <p class="flex justify-between mb-2 text-red-600"><span class="font-bold">Total Egresos Banco:</span> <span class="font-mono">- {{ number_format($egresosBanco, 2) }} Bs</span></p>
-                <p class="flex justify-between font-black text-base mt-2 border-t-2 border-gray-800 pt-2 text-blue-700"><span>SALDO BANCO:</span> <span>{{ number_format($saldoBanco, 2) }} Bs</span></p>
+                <p class="flex justify-between mb-1"><span class="font-bold text-gray-600 print:text-black">Total Ingresos Banco (QR):</span> <span class="font-mono">+ {{ number_format($ingresosBanco, 2) }} Bs</span></p>
+                <p class="flex justify-between mb-2 text-red-600 print:text-black"><span class="font-bold">Total Egresos Banco:</span> <span class="font-mono">- {{ number_format($egresosBanco, 2) }} Bs</span></p>
+                <p class="flex justify-between font-black text-base mt-2 border-t-2 border-gray-800 pt-2 text-blue-700 print:text-black"><span>SALDO BANCO:</span> <span>{{ number_format($saldoBanco, 2) }} Bs</span></p>
+            </div>
+        </div>
+
+        {{-- GRAN RESUMEN FINAL (Diseñado para resaltar en la hoja impresa) --}}
+        <div class="px-2">
+            <div class="border-2 border-gray-800 print:border-black rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center bg-gray-50 print:bg-transparent">
+                
+                <div class="text-center sm:text-left mb-3 sm:mb-0 w-full sm:w-1/3">
+                    <span class="block text-[11px] font-bold text-gray-500 print:text-gray-700 uppercase tracking-wider">Recaudación Bruta</span>
+                    <span class="text-xl font-black text-green-600 print:text-black">+{{ number_format($ingresosEfectivo + $ingresosBanco, 2) }} Bs</span>
+                </div>
+                
+                <div class="text-center mb-3 sm:mb-0 w-full sm:w-1/3 border-t sm:border-t-0 sm:border-x border-gray-300 print:border-gray-400 py-2 sm:py-0">
+                    <span class="block text-[11px] font-bold text-gray-500 print:text-gray-700 uppercase tracking-wider">Gastos Totales</span>
+                    <span class="text-xl font-black text-red-500 print:text-black">-{{ number_format($egresosEfectivo + $egresosBanco, 2) }} Bs</span>
+                </div>
+                
+                <div class="text-center sm:text-right w-full sm:w-1/3 border-t sm:border-t-0 border-gray-300 print:border-transparent pt-2 sm:pt-0">
+                    <span class="block text-xs font-black text-gray-800 print:text-black uppercase tracking-widest">Saldo Neto Final</span>
+                    <span class="text-3xl font-black text-gray-900 print:text-black">{{ number_format($totalGeneral, 2) }} Bs</span>
+                </div>
+
             </div>
         </div>
     </div>

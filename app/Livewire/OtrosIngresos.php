@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\OtrosIngresosModel;
@@ -21,9 +22,7 @@ class OtrosIngresos extends Component
     public $formKey = 1;
     public $datosRecibo = null;
     public $showModalExito = false;
-
-    public $id_ingreso_editando = null;
-    
+   
     public $nombre_origen;
     public $concepto;
     public $descripcion;
@@ -32,19 +31,23 @@ class OtrosIngresos extends Component
     public $id_metodo_pago;
 
     public $metodosPago = [];
-    
+
     public $search = '';
     public $mesFilter;
 
     public $ultimoIngresoId = null;
 
+    public $ingresoSeleccionado = null;
+    public $metodoPagoDetalle = ''; // Extraemos el método de pago desde la transacción
+    public $showModalDetalle = false;
+
     public function mount()
     {
-        $this->fecha_ingreso = Carbon::now()->format('Y-m-d\TH:i'); 
+        $this->fecha_ingreso = Carbon::now()->format('Y-m-d\TH:i');
         $this->metodosPago = MetodoPagoModel::where('activo', true)->get();
-        $this->mesFilter = Carbon::now()->format('Y-m'); 
+        $this->mesFilter = Carbon::now()->format('Y-m');
     }
-    
+
     public function render()
     {
         $ingresos = OtrosIngresosModel::where(function($q) {
@@ -71,45 +74,8 @@ class OtrosIngresos extends Component
         $this->formKey++;
     }
 
-    public function editar($id)
-    {
-        $ingreso = OtrosIngresosModel::find($id);
-
-        $this->id_ingreso_editando = $ingreso->id_ingreso;
-        $this->nombre_origen = $ingreso->nombre_origen;
-        $this->concepto = $ingreso->concepto;
-        $this->descripcion = $ingreso->descripcion;
-        $this->monto = $ingreso->monto_total;
-        $this->fecha_ingreso = Carbon::parse($ingreso->fecha_ingreso)->format('Y-m-d\TH:i');
-
-        $pago = PagoModel::where('origen_id', $id)
-                    ->where('origen_type', OtrosIngresosModel::class)
-                    ->first();
-
-        if ($pago) {
-            $transaccion = TransaccionModel::where('id_pago', $pago->id_pago)->first();
-            $this->id_metodo_pago = $transaccion ? $transaccion->id_metodo_pago : '';
-        }
-
-        $this->formKey++;
-    }
-
-    public function cancelarEdicion()
-    {
-        $this->id_ingreso_editando = null;
-        $this->limpiarDatos();
-    }
-
     public function guardarIngreso()
     {
-        $cajaAbierta = CajaModel::where('id_usuario', Auth::id())
-                            ->where('estado', 'abierta')
-                            ->first();
-
-        if (!$cajaAbierta) {
-            $this->addError('caja', '¡Alerta! No tienes una caja abierta en este momento. Por favor, ve a "Operación Diaria" y abre tu caja antes de registrar o editar ingresos.');
-            return;
-        }
 
         $this->validate([
             'nombre_origen' => 'nullable|string|max:150',
@@ -119,80 +85,48 @@ class OtrosIngresos extends Component
             'id_metodo_pago' => 'required|exists:metodos_pago,id_metodo_pago',
         ]);
 
-        $ingresoResult = null;
+        $cajaAbierta = CajaModel::where('id_usuario', Auth::id())
+                            ->where('estado', 'abierta')
+                            ->first();
 
-        DB::transaction(function () use ($cajaAbierta, &$ingresoResult) {
-            
-            if ($this->id_ingreso_editando) {
-                // ES UNA EDICIÓN: Actualizamos el Ingreso
-                $ingresoResult = OtrosIngresosModel::find($this->id_ingreso_editando);
-                $ingresoResult->update([
-                    'nombre_origen' => $this->nombre_origen,
-                    'concepto' => $this->concepto,
-                    'descripcion' => $this->descripcion,
-                    'monto_total' => $this->monto,
-                    'fecha_ingreso' => $this->fecha_ingreso,
-                ]);
+        if (!$cajaAbierta) {
+            $this->addError('general', 'No hay una caja abierta para registrar este ingreso.');
+            return;
+        }
 
-                // Actualizamos el Pago vinculado
-                $pago = PagoModel::where('origen_id', $this->id_ingreso_editando)
-                                 ->where('origen_type', OtrosIngresosModel::class)
-                                 ->first();
+        DB::transaction(function () use ($cajaAbierta, &$ingreso) {
+            // A. Crear el Ingreso
+            $ingreso = OtrosIngresosModel::create([
+                'nombre_origen' => $this->nombre_origen,
+                'concepto' => $this->concepto,
+                'descripcion' => $this->descripcion,
+                'monto_total' => $this->monto,
+                'fecha_ingreso' => $this->fecha_ingreso,
+            ]);
 
-                if ($pago) {
-                    $pago->update([
-                        'fecha_vencimiento' => $this->fecha_ingreso,
-                        'fecha_pago' => $this->fecha_ingreso,
-                        'descripcion' => 'Otros Ingresos: ' . $this->concepto,
-                        'monto_total' => $this->monto,
-                        'monto_abonado' => $this->monto,
-                    ]);
+            $this->ultimoIngresoId = $ingreso->id_ingreso;
 
-                    // Actualizamos la Transacción vinculada
-                    $transaccion = TransaccionModel::where('id_pago', $pago->id_pago)->first();
-                    if ($transaccion) {
-                        $transaccion->update([
-                            'id_metodo_pago' => $this->id_metodo_pago,
-                            'monto' => $this->monto,
-                            'fecha_transaccion' => $this->fecha_ingreso
-                        ]);
-                    }
-                }
-                
-                $this->id_ingreso_editando = null; // Apagamos el modo edición
+            // B. Crear Pago Polimórfico
+            $pago = PagoModel::create([
+                'origen_id' => $ingreso->id_ingreso,
+                'origen_type' => OtrosIngresosModel::class,
+                'id_estudiante' => null, // No es de un estudiante
+                'fecha_vencimiento' => $this->fecha_ingreso,
+                'fecha_pago' => $this->fecha_ingreso,
+                'descripcion' => 'Otros Ingresos: ' . $this->concepto,
+                'monto_total' => $this->monto,
+                'monto_abonado' => $this->monto,
+                'estado' => 'pagado'
+            ]);
 
-            } else {
-                // ES UN REGISTRO NUEVO
-                $ingresoResult = OtrosIngresosModel::create([
-                    'nombre_origen' => $this->nombre_origen,
-                    'concepto' => $this->concepto,
-                    'descripcion' => $this->descripcion,
-                    'monto_total' => $this->monto,
-                    'fecha_ingreso' => $this->fecha_ingreso,
-                ]);
-
-                $this->ultimoIngresoId = $ingresoResult->id_ingreso;
-
-                $pago = PagoModel::create([
-                    'origen_id' => $ingresoResult->id_ingreso,
-                    'origen_type' => OtrosIngresosModel::class,
-                    'id_estudiante' => null, 
-                    'fecha_vencimiento' => $this->fecha_ingreso,
-                    'fecha_pago' => $this->fecha_ingreso,
-                    'descripcion' => 'Otros Ingresos: ' . $this->concepto,
-                    'monto_total' => $this->monto,
-                    'monto_abonado' => $this->monto,
-                    'estado' => 'pagado'
-                ]);
-
-                TransaccionModel::create([
-                    'id_pago' => $pago->id_pago,
-                    'id_metodo_pago' => $this->id_metodo_pago,
-                    'id_caja' => $cajaAbierta->id_caja,
-                    'monto' => $this->monto,
-                    'fecha_transaccion' => $this->fecha_ingreso
-                ]);
-            }
+            // C. Transacción a Caja
+            TransaccionModel::create([
+                'id_pago' => $pago->id_pago,
+                'id_metodo_pago' => $this->id_metodo_pago,
+                'id_caja' => $cajaAbierta->id_caja,
+                'monto' => $this->monto,
+                'fecha_transaccion' => $this->fecha_ingreso
+            ]);
         });
 
         $metodoSeleccionado = MetodoPagoModel::find($this->id_metodo_pago);
@@ -208,7 +142,7 @@ class OtrosIngresos extends Component
             'monto' => $this->monto,
             'metodo_pago' => $metodoSeleccionado->nombre,
         ];
-        
+       
         $this->limpiarDatos();
         $this->showModalExito = true;
     }
@@ -249,5 +183,26 @@ class OtrosIngresos extends Component
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, 'Recibo_Ingreso_Nro_' . $this->datosRecibo['nro_recibo'] . '.pdf');
+    }
+
+    public function verDetalle($id)
+    {
+        $this->ingresoSeleccionado = OtrosIngresosModel::find($id);
+        
+        // Buscamos con qué método pagaron este ingreso
+        $pago = PagoModel::where('origen_id', $id)->where('origen_type', OtrosIngresosModel::class)->first();
+        if ($pago) {
+            $transaccion = TransaccionModel::with('metodo')->where('id_pago', $pago->id_pago)->first();
+            $this->metodoPagoDetalle = $transaccion && $transaccion->metodo ? $transaccion->metodo->nombre : 'N/A';
+        }
+
+        $this->showModalDetalle = true;
+    }
+
+    public function cerrarModalDetalle()
+    {
+        $this->showModalDetalle = false;
+        $this->ingresoSeleccionado = null;
+        $this->metodoPagoDetalle = '';
     }
 }

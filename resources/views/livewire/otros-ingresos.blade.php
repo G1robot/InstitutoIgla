@@ -1,72 +1,68 @@
 <div class="px-4 pb-8">
-
     {{-- SISTEMA WEB --}}
     <div class="ocultar-al-imprimir">
-        
+
         <div class="mb-8 border-l-4 border-green-500 pl-4">
             <h2 class="text-2xl font-black text-gray-800 tracking-tight">OTROS INGRESOS DE CAJA</h2>
             <p class="text-sm text-gray-500 mt-1">Registra donaciones, multas, patrocinios y entradas extras de dinero.</p>
         </div>
 
-        @error('general') 
+        @error('general')
             <div class="mb-4 bg-red-50 text-red-600 p-3 rounded-lg border border-red-200 font-bold"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</div>
         @enderror
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
             {{-- COLUMNA IZQUIERDA: FORMULARIO --}}
             <div class="lg:col-span-1">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-green-500 sticky top-4">
                     <h3 class="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
-                        @if($id_ingreso_editando)
-                            <i class="fas fa-pen-to-square text-blue-500"></i> Editando Ingreso #{{ $id_ingreso_editando }}
-                        @else
-                            <i class="fa-solid fa-hand-holding-dollar text-green-500"></i> Nuevo Ingreso
-                        @endif
+                        <i class="fa-solid fa-hand-holding-dollar text-green-500"></i> Nuevo Ingreso
                     </h3>
 
-                    {{-- ALERTA DE CAJA CERRADA --}}
-                    @error('caja') 
-                        <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm">
-                            <p class="text-red-700 font-bold text-sm">
-                                <i class="fa-solid fa-triangle-exclamation mr-1 text-lg"></i> {{ $message }}
-                            </p>
-                        </div>
-                    @enderror
-
                     <form wire:submit.prevent="guardarIngreso" class="space-y-4" autocomplete="off" wire:key="form-ingreso-{{ $formKey }}">
-                        
                         {{-- Origen --}}
+
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nombre / Origen (Opcional)</label>
                             <input type="text" wire:model="nombre_origen" autocomplete="off" placeholder="Ej: Alcaldía, Sr. Perez..."
+
                                 class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-shadow">
                             @error('nombre_origen') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
+
                         {{-- Concepto --}}
+
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Concepto Principal *</label>
                             <input type="text" wire:model="concepto" autocomplete="off" placeholder="Ej: Donación, Multa por atraso..."
+
                                 class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-shadow">
                             @error('concepto') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
+
                         {{-- Descripción --}}
+
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Detalles Extras</label>
                             <textarea wire:model="descripcion" rows="2"
-                                class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-shadow text-sm resize-none bg-gray-50 focus:bg-white" 
+
+                                class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-shadow text-sm resize-none bg-gray-50 focus:bg-white"
+
                                 placeholder="Notas adicionales..."></textarea>
                             @error('descripcion') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
+
                         {{-- Monto y Método --}}
+
                         <div class="grid grid-cols-2 gap-4 bg-green-50 p-3 rounded-lg border border-green-100">
                             <div>
                                 <label class="block text-xs font-bold text-green-800 uppercase mb-1">Monto (Bs) *</label>
                                 <div class="relative">
                                     <input type="number" step="0.10" wire:model="monto" autocomplete="off"
+
                                         class="w-full border-none rounded-md py-2 pl-2 pr-8 focus:ring-2 focus:ring-green-500 font-black text-lg text-green-600 text-right shadow-sm">
                                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                         <span class="text-green-500 font-bold text-sm">Bs</span>
@@ -79,42 +75,41 @@
                                 <select wire:model="id_metodo_pago" class="w-full border-none rounded-md py-2 px-2 focus:ring-2 focus:ring-green-500 text-sm font-bold text-gray-700 shadow-sm">
                                     <option value="">Seleccione...</option>
                                     @foreach($metodosPago as $metodo)
+
                                         <option value="{{ $metodo->id_metodo_pago }}">
                                             {{ $metodo->nombre }}
                                         </option>
                                     @endforeach
+
                                 </select>
                                 @error('id_metodo_pago') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
+
                         {{-- Fecha --}}
+
                         <div>
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Fecha y Hora</label>
                             <input type="datetime-local" wire:model="fecha_ingreso" class="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm text-gray-600">
                         </div>
 
-                        <div class="pt-4 border-t border-gray-100 flex flex-col gap-2 mt-4">
+
+                        <div class="pt-4 border-t border-gray-100">
                             <button type="submit" wire:loading.attr="disabled" wire:target="guardarIngreso"
-                                class="w-full text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed {{ $id_ingreso_editando ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700' }}">
-                                <span wire:loading.remove wire:target="guardarIngreso">
-                                    <i class="fa-solid {{ $id_ingreso_editando ? 'fa-floppy-disk' : 'fa-arrow-right-to-bracket' }}"></i> 
-                                    {{ $id_ingreso_editando ? 'Actualizar Ingreso' : 'Registrar Ingreso' }}
-                                </span>
+
+                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                                <span wire:loading.remove wire:target="guardarIngreso"><i class="fa-solid fa-arrow-right-to-bracket"></i> Registrar Ingreso</span>
                                 <span wire:loading wire:target="guardarIngreso"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
                             </button>
-
-                            @if($id_ingreso_editando)
-                                <button type="button" wire:click="cancelarEdicion" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2.5 rounded-xl transition-all">
-                                    Cancelar Edición
-                                </button>
-                            @endif
                         </div>
                     </form>
                 </div>
             </div>
 
+
             {{-- COLUMNA DERECHA: LISTADO --}}
+
             <div class="lg:col-span-2">
                 <div class="flex flex-col sm:flex-row justify-between items-center mb-4 bg-white p-3 rounded-xl shadow-sm border border-gray-100 gap-4">
                     <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -125,10 +120,12 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400"></i>
                         </div>
-                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="Buscar ingreso..." 
+                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="Buscar ingreso..."
+
                             class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 text-sm bg-gray-50 focus:bg-white">
                     </div>
                 </div>
+
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="overflow-x-auto">
@@ -143,6 +140,7 @@
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
                                 @forelse($ingresos as $ing)
+
                                     <tr class="hover:bg-green-50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div class="font-bold text-gray-700">{{ \Carbon\Carbon::parse($ing->fecha_ingreso)->format('d M, Y') }}</div>
@@ -159,20 +157,21 @@
                                             <span class="text-xs font-bold text-green-400">Bs</span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <button wire:click="editar({{ $ing->id_ingreso }})" 
-                                                @click="window.scrollTo({ top: 0, behavior: 'smooth' });"
-                                                class="text-gray-400 hover:text-blue-600 transition p-2 rounded-lg hover:bg-blue-100 mr-1" title="Editar registro">
-                                                <i class="fas fa-edit"></i>
+                                            <button wire:click="verDetalle({{ $ing->id_ingreso }})" 
+                                                class="text-gray-400 hover:text-blue-600 transition p-2 rounded-lg hover:bg-blue-100 mr-1" title="Ver Detalles">
+                                                <i class="fas fa-eye"></i>
                                             </button>
 
-                                            <button wire:click="eliminar({{ $ing->id_ingreso }})" 
-                                                onclick="confirm('¿Eliminar este ingreso? Se descontará el saldo de caja.') || event.stopImmediatePropagation()" 
+                                            <button wire:click="eliminar({{ $ing->id_ingreso }})"
+                                                onclick="confirm('¿Eliminar este ingreso? Se descontará el saldo de caja.') || event.stopImmediatePropagation()"
+
                                                 class="text-gray-400 hover:text-red-600 transition p-2 rounded-lg hover:bg-red-100">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </td>
                                     </tr>
                                 @empty
+
                                     <tr>
                                         <td colspan="4" class="text-center py-12 text-gray-400">
                                             <i class="fa-solid fa-box-open text-4xl mb-3 text-gray-300"></i>
@@ -180,45 +179,112 @@
                                         </td>
                                     </tr>
                                 @endforelse
+
                             </tbody>
                         </table>
                     </div>
                     @if(method_exists($ingresos, 'hasPages') && $ingresos->hasPages())
                         <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">{{ $ingresos->links() }}</div>
                     @endif
+
                 </div>
             </div>
         </div>
 
+
         {{-- MODAL DE ÉXITO --}}
+
         @if($showModalExito)
+
         <div class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 no-imprimir animate-fade-in-down">
             <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full border-t-4 border-green-500">
                 <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
                     <i class="fas fa-check text-4xl"></i>
                 </div>
                 <h3 class="text-2xl font-black text-gray-800 mb-2">¡Ingreso Registrado!</h3>
-                
+               
+
                 <div class="flex flex-col gap-3 mt-6">
                     <button onclick="window.print()" class="bg-gray-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition w-full flex items-center justify-center gap-2 shadow-lg">
                         <i class="fa-solid fa-print"></i> Imprimir Comprobante
                     </button>
 
+
                     <button wire:click="descargarReciboPdf" wire:loading.attr="disabled" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition w-full flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
                         <span wire:loading.remove wire:target="descargarReciboPdf"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</span>
                         <span wire:loading wire:target="descargarReciboPdf"><i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...</span>
                     </button>
-                    
+                   
+
                     <button wire:click="cerrarModalExito" class="bg-green-50 text-green-600 px-6 py-3 rounded-xl font-bold hover:bg-green-100 transition w-full">
                         Nuevo Ingreso
+
                     </button>
                 </div>
             </div>
         </div>
         @endif
 
-    </div> {{-- FIN SISTEMA WEB --}}
+        {{-- MODAL VER DETALLES INGRESOS --}}
+        @if($showModalDetalle && $ingresoSeleccionado)
+        <div class="fixed inset-0 z-50 overflow-y-auto animate-fade-in-down">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" wire:click="cerrarModalDetalle"></div>
 
+                <div class="relative inline-block w-full max-w-lg p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+                    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
+                        <h3 class="text-lg font-black text-gray-800 uppercase">
+                            <i class="fa-solid fa-hand-holding-dollar text-green-500 mr-2"></i> Detalle de Ingreso #{{ str_pad($ingresoSeleccionado->id_ingreso, 5, '0', STR_PAD_LEFT) }}
+                        </h3>
+                        <button wire:click="cerrarModalDetalle" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase">Monto</span>
+                                <span class="text-xl font-black text-green-600">+{{ number_format($ingresoSeleccionado->monto_total, 2) }} Bs</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase">Fecha y Hora</span>
+                                <span class="text-sm font-bold text-gray-800">{{ \Carbon\Carbon::parse($ingresoSeleccionado->fecha_ingreso)->format('d/m/Y H:i') }}</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Origen del Dinero</span>
+                            <span class="text-xs font-bold text-gray-700"><i class="fa-regular fa-user text-gray-400 mr-1"></i> {{ $ingresoSeleccionado->nombre_origen ?: 'Anónimo / Varios' }}</span>
+                        </div>
+
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Concepto Principal</span>
+                            <p class="text-sm text-gray-800 font-bold bg-white border border-gray-200 p-3 rounded-lg">{{ $ingresoSeleccionado->concepto }}</p>
+                        </div>
+
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Observaciones / Descripción Larga</span>
+                            <div class="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg max-h-40 overflow-y-auto custom-scrollbar whitespace-pre-wrap">
+                                {{ $ingresoSeleccionado->descripcion ?: 'Sin observaciones extra.' }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Ingresó a (Caja/Banco)</span>
+                            <span class="text-xs font-bold bg-gray-100 text-gray-700 px-2 py-1 rounded">{{ $metodoPagoDetalle }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-100">
+                        <button wire:click="cerrarModalDetalle" class="w-full bg-gray-800 text-white font-bold py-2.5 rounded-xl hover:bg-black transition-all">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+
+
+    </div> {{-- FIN SISTEMA WEB --}}
     {{-- RECIBO PARA IMPRIMIR --}}
     @if($datosRecibo)
     <div class="zona-impresion bg-white">
