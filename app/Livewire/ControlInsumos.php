@@ -43,6 +43,7 @@ class ControlInsumos extends Component
     public $showModalMultiple = false;
     public $estudianteMultiple = null;
     public $fechasMultiple = [];
+    public $montosPago = [];
 
     public $showModalAbono = false;
     public $estudianteAbono = null;
@@ -254,8 +255,8 @@ class ControlInsumos extends Component
     public function abrirCobroMultiple($id_estudiante)
     {
         $this->estudianteMultiple = EstudianteModel::find($id_estudiante);
-        // Iniciamos el array con la fecha que esté seleccionada en el filtro
         $this->fechasMultiple = [$this->fecha_semana]; 
+        $this->montosPago = [];
         $this->showModalMultiple = true;
     }
 
@@ -281,57 +282,57 @@ class ControlInsumos extends Component
         $this->showModalMultiple = false;
         $this->estudianteMultiple = null;
         $this->fechasMultiple = [];
+        $this->montosPago = [];
     }
 
     public function procesarCobroMultiple()
     {
-        // 1. Validaciones
         if(empty($this->fechasMultiple)) {
             $this->addError('multiple', 'Debe agregar al menos una fecha.'); return;
         }
-        if (!$this->articulo_seleccionado || !$this->metodo_pago_seleccionado) {
-            $this->addError('multiple', 'Seleccione un tipo de Insumo y Método de pago en la barra superior.'); return;
+        if (!$this->articulo_seleccionado) {
+            $this->addError('multiple', 'Seleccione un tipo de Insumo en la barra superior.'); return;
         }
 
         $articulo = ArticuloModel::find($this->articulo_seleccionado);
-        $cajaAbierta = CajaModel::where('id_usuario', Auth::id())->where('estado', 'abierta')->first();
+        $cantidadSemanas = count($this->fechasMultiple);
+        $totalCobrar = $articulo->precio * $cantidadSemanas;
 
+        // Validar que el dinero ingresado alcance
+        $totalIngresado = collect($this->montosPago)->map(fn($v) => (float)$v)->sum();
+        
+        if ($totalIngresado < ($totalCobrar - 0.05)) { // 0.05 de tolerancia por decimales
+            $this->addError('multiple', "El monto ingresado ($totalIngresado Bs) no cubre el total de $totalCobrar Bs."); 
+            return;
+        }
+
+        $cajaAbierta = CajaModel::where('id_usuario', Auth::id())->where('estado', 'abierta')->first();
         if (!$cajaAbierta) {
             $this->addError('multiple', 'No hay caja abierta.'); return;
         }
 
-        // 2. Verificar que ninguna de las fechas elegidas ya esté pagada/registrada
-        $semanasSeleccionadas = []; // Para evitar duplicados en el mismo modal
-
+        // Verificación de duplicados (Igual a tu código)
+        $semanasSeleccionadas = [];
         foreach($this->fechasMultiple as $fecha) {
             $inicioSemana = Carbon::parse($fecha)->startOfWeek()->format('Y-m-d');
             $finSemana = Carbon::parse($fecha)->endOfWeek()->format('Y-m-d');
 
-            // A. Evitar que pongan dos días de la misma semana en el modal
             if (in_array($inicioSemana, $semanasSeleccionadas)) {
-                $this->addError('multiple', 'Has añadido dos fechas que pertenecen a la misma semana. Solo se cobra 1 insumo por semana.');
-                return;
+                $this->addError('multiple', 'Has añadido dos fechas que pertenecen a la misma semana.'); return;
             }
             $semanasSeleccionadas[] = $inicioSemana;
 
-            // B. Revisar si la base de datos ya tiene un pago en esa semana
             $existe = ControlInsumoModel::where('id_estudiante', $this->estudianteMultiple->id_estudiante)
                         ->whereBetween('fecha_semana', [$inicioSemana, $finSemana])
-                        ->where('estado', '!=', 'anulado')
-                        ->first();
+                        ->where('estado', '!=', 'anulado')->first();
                         
             if($existe) {
-                $this->addError('multiple', "El alumno ya pagó la semana del " . Carbon::parse($inicioSemana)->format('d/m/Y'));
-                return;
+                $this->addError('multiple', "El alumno ya pagó la semana del " . Carbon::parse($inicioSemana)->format('d/m/Y')); return;
             }
         }
 
-        // 3. Ejecutar la transacción maestra
-        DB::transaction(function () use ($articulo, $cajaAbierta) {
-            $cantidadSemanas = count($this->fechasMultiple);
-            $totalCobrar = $articulo->precio * $cantidadSemanas;
-
-            // A. Venta global
+        DB::transaction(function () use ($articulo, $cajaAbierta, $totalCobrar, $cantidadSemanas, $totalIngresado) {
+            
             $venta = VentaModel::create([
                 'id_estudiante' => $this->estudianteMultiple->id_estudiante,
                 'fecha_venta' => Carbon::now(),
@@ -342,7 +343,6 @@ class ControlInsumos extends Component
             $this->ultimoIdVenta = $venta->id_venta;
             $itemsRecibo = [];
 
-            // B. Recorrer cada fecha y registrar su detalle y su control de insumo
             foreach($this->fechasMultiple as $fecha) {
                 DetalleVentaModel::create([
                     'id_venta' => $venta->id_venta,
@@ -359,7 +359,6 @@ class ControlInsumos extends Component
                     'id_venta' => $venta->id_venta
                 ]);
 
-                // Armamos la línea para el PDF, asegurando que diga "Insumo Semanal (Fecha)"
                 $itemsRecibo[] = [
                     'cantidad' => 1,
                     'nombre' => $articulo->nombre . ' (Sem: ' . Carbon::parse($fecha)->format('d/m/y') . ')',
@@ -368,7 +367,6 @@ class ControlInsumos extends Component
                 ];
             }
 
-            // C. El Pago y la Transacción para la contadora
             $pago = PagoModel::create([
                 'origen_id' => $venta->id_venta,
                 'origen_type' => VentaModel::class,
@@ -381,25 +379,56 @@ class ControlInsumos extends Component
                 'estado' => 'pagado'
             ]);
 
-            TransaccionModel::create([
-                'id_pago' => $pago->id_pago,
-                'id_metodo_pago' => $this->metodo_pago_seleccionado,
-                'id_caja' => $cajaAbierta->id_caja,
-                'monto' => $totalCobrar,
-                'fecha_transaccion' => Carbon::now()
-            ]);
+            // --- MAGIA DEL PAGO DIVIDIDO EN TRANSACCIONES ---
+            $metodosNombres = [];
+            foreach ($this->montosPago as $id_metodo => $monto) {
+                if ((float)$monto > 0) {
+                    TransaccionModel::create([
+                        'id_pago' => $pago->id_pago,
+                        'id_metodo_pago' => $id_metodo,
+                        'id_caja' => $cajaAbierta->id_caja,
+                        'monto' => (float)$monto,
+                        'fecha_transaccion' => Carbon::now()
+                    ]);
+                    $metodoModel = MetodoPagoModel::find($id_metodo);
+                    if($metodoModel) {
+                        $metodosNombres[] = $metodoModel->nombre;
+                    }
+                }
+            }
 
-            // D. Mandar datos al recibo
+            $metodosUsados = []; // <-- Array para guardar los nombres y montos
+
+            foreach ($this->montosPago as $id_metodo => $monto) {
+                if ((float)$monto > 0) {
+                    TransaccionModel::create([
+                        'id_pago' => $pago->id_pago,
+                        'id_metodo_pago' => $id_metodo,
+                        'id_caja' => $cajaAbierta->id_caja,
+                        'monto' => (float)$monto,
+                        'fecha_transaccion' => Carbon::now()
+                    ]);
+                    
+                    $metodoModel = MetodoPagoModel::find($id_metodo);
+                    if($metodoModel) {
+                        // Guardamos ej: "Efectivo: 200.00 Bs"
+                        $metodosUsados[] = $metodoModel->nombre . ': ' . number_format((float)$monto, 2) . ' Bs';
+                    }
+                }
+            }
+
+            // Armar recibo
             $this->datosRecibo = [
                 'nro_recibo' => str_pad($venta->id_venta, 6, '0', STR_PAD_LEFT),
                 'estudiante' => $this->estudianteMultiple->nombre . ' ' . $this->estudianteMultiple->apellido,
                 'ci' => $this->estudianteMultiple->ci,
                 'fecha' => Carbon::now()->format('d/m/Y H:i'),
                 'cajero' => Auth::user()->nombre ?? 'Administrador',
-                'items' => $itemsRecibo, // Aquí va el array con todas las fechas
+                'items' => $itemsRecibo,
                 'total' => $totalCobrar,
-                'ingresado' => $totalCobrar,
-                'cambio' => 0,
+                'ingresado' => $totalIngresado, 
+                'cambio' => max(0, $totalIngresado - $totalCobrar),
+                'metodos_pago' => implode(' | ', $metodosUsados) // <-- ¡ENVIAMOS EL TEXTO AL RECIBO!
             ];
         });
 
@@ -604,5 +633,22 @@ class ControlInsumos extends Component
 
         $this->cerrarModalAbono();
         $this->showModalExito = true;
+    }
+
+    //Multiples métodos de pago
+    public function llenarSaldo($id_metodo_pago)
+    {
+        $art = ArticuloModel::find($this->articulo_seleccionado);
+        $total = $art ? $art->precio * count($this->fechasMultiple) : 0;
+        $ingresadoOtros = 0;
+
+        foreach ($this->montosPago as $key => $monto) {
+            if ($key != $id_metodo_pago) {
+                $ingresadoOtros += (float)$monto;
+            }
+        }
+
+        $restante = max(0, $total - $ingresadoOtros);
+        $this->montosPago[$id_metodo_pago] = $restante > 0 ? round($restante, 2) : '';
     }
 }

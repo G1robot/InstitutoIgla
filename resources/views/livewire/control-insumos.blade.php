@@ -269,16 +269,42 @@
                         </button>
                     </div>
 
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-5">
-                        <div class="flex justify-between items-center font-black text-gray-800 text-lg">
-                            <span>TOTAL:</span>
-                            @php
-                                $art = \App\Models\ArticuloModel::find($articulo_seleccionado);
-                                $totalModal = $art ? $art->precio * count($fechasMultiple) : 0;
-                            @endphp
-                            <span class="text-blue-600">{{ number_format($totalModal, 2) }} Bs</span>
+                    @php
+                        $art = \App\Models\ArticuloModel::find($articulo_seleccionado);
+                        $totalModal = $art ? $art->precio * count($fechasMultiple) : 0;
+                        
+                        // Añadimos $this-> y validamos que $v no esté vacío
+                        $totalIngresado = collect($this->montosPago ?? [])->map(fn($v) => (float)($v ?: 0))->sum();
+                    @endphp
+
+                    {{-- RESUMEN DEL COBRO --}}
+                    <div class="flex justify-between items-end mb-4 border-b pb-2">
+                        <span class="text-sm font-bold text-gray-500 uppercase">A Pagar:</span>
+                        <span class="text-2xl font-black text-gray-800">{{ number_format($totalModal, 2) }} <span class="text-sm">Bs</span></span>
+                    </div>
+
+                    {{-- BLOQUE DE PAGOS MÚLTIPLES --}}
+                    <div class="space-y-3 mb-6 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-wallet mr-1"></i> ¿Cómo pagará el estudiante?</label>
+                        
+                        @foreach($metodosPago as $metodo)
+                            <div class="flex shadow-sm rounded-lg overflow-hidden border border-gray-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all bg-white">
+                                <span class="inline-flex items-center justify-center px-3 bg-gray-100 text-gray-600 text-[11px] font-bold w-24 border-r border-gray-300 uppercase">
+                                    {{ $metodo->nombre }}
+                                </span>
+                                <input type="number" step="0.50" wire:model.live.debounce.500ms="montosPago.{{ $metodo->id_metodo_pago }}" 
+                                    class="flex-1 w-full px-3 py-2 border-none text-sm font-bold text-gray-800 focus:ring-0 bg-transparent text-right" 
+                                    placeholder="0.00">
+                                <button wire:click="llenarSaldo({{ $metodo->id_metodo_pago }})" class="px-3 bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition border-l border-blue-200" title="Autocompletar saldo restante">
+                                    <i class="fa-solid fa-reply"></i>
+                                </button>
+                            </div>
+                        @endforeach
+                        
+                        <div class="flex justify-between text-xs pt-3 border-t border-gray-200 mt-2">
+                            <span>Ingresado: <strong class="{{ $totalIngresado >= $totalModal - 0.05 ? 'text-green-600' : 'text-red-500' }} font-mono text-sm">{{ number_format($totalIngresado, 2) }}</strong></span>
+                            <span>Cambio: <strong class="font-mono text-sm text-gray-800">{{ number_format(max(0, $totalIngresado - $totalModal), 2) }}</strong></span>
                         </div>
-                        <div class="text-xs text-gray-500 mt-1 text-right">Se cobrará usando el método configurado en la barra superior.</div>
                     </div>
 
                     <button wire:click="procesarCobroMultiple" wire:loading.attr="disabled" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50">
@@ -421,11 +447,31 @@
         </table>
 
         <div class="flex justify-end mb-6">
-            <div class="w-2/3 sm:w-1/2 text-sm">
-                <div class="flex justify-between font-black text-base border-t-2 border-gray-800 pt-1">
+            <div class="w-full sm:w-3/4 text-sm text-right border-t-2 border-gray-800 pt-1">
+                {{-- TOTAL A PAGAR --}}
+                <div class="flex justify-between font-black text-base mb-1">
                     <span>TOTAL Bs:</span>
                     <span>{{ number_format($datosRecibo['total'], 2) }}</span>
                 </div>
+                
+                {{-- DETALLE DE EFECTIVO Y CAMBIO --}}
+                @if(isset($datosRecibo['ingresado']))
+                <div class="flex justify-between text-xs text-gray-600 mb-0.5">
+                    <span>Recibido:</span>
+                    <span>{{ number_format($datosRecibo['ingresado'], 2) }}</span>
+                </div>
+                <div class="flex justify-between text-xs text-gray-600 mb-2">
+                    <span>Cambio / Vuelto:</span>
+                    <span>{{ number_format($datosRecibo['cambio'], 2) }}</span>
+                </div>
+                @endif
+
+                {{-- DESGLOSE DE MÉTODOS DE PAGO --}}
+                @if(isset($datosRecibo['metodos_pago']))
+                <div class="text-[10px] text-gray-500 font-bold border-t border-dashed border-gray-300 pt-1 text-right">
+                    Pagado con: {{ $datosRecibo['metodos_pago'] }}
+                </div>
+                @endif
             </div>
         </div>
 
