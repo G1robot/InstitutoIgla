@@ -145,6 +145,15 @@
                                                     class="bg-green-500 text-white hover:bg-green-700 px-3 py-1.5 rounded-lg transition shadow-md text-xs font-bold animate-pulse" title="Completar deuda">
                                                     <i class="fa-solid fa-hand-holding-dollar"></i> Completar Pago
                                                 </button>
+                                                
+                                            {{-- NUEVO BLOQUE: BOTÓN DESHACER PARA FALTA O LICENCIA --}}
+                                            @elseif($registroActual->estado === 'falta' || $registroActual->estado === 'licencia')
+                                                <button wire:click="anularEstadoInsumo({{ $registroActual->id_control_insumo }})" 
+                                                    onclick="confirm('¿Estás seguro de deshacer esta acción?') || event.stopImmediatePropagation()"
+                                                    wire:loading.attr="disabled"
+                                                    class="bg-gray-100 text-gray-600 hover:bg-gray-800 hover:text-white px-3 py-1.5 rounded-lg transition border border-gray-200 shadow-sm text-xs font-bold" title="Deshacer y volver a registrar">
+                                                    <i class="fa-solid fa-rotate-left"></i> Deshacer
+                                                </button>
                                             @endif
 
                                             <button wire:click="abrirCobroMultiple({{ $est->id_estudiante }})" wire:loading.attr="disabled"

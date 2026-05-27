@@ -651,4 +651,15 @@ class ControlInsumos extends Component
         $restante = max(0, $total - $ingresadoOtros);
         $this->montosPago[$id_metodo_pago] = $restante > 0 ? round($restante, 2) : '';
     }
+    
+    public function anularEstadoInsumo($id_control_insumo)
+    {
+        $insumo = ControlInsumoModel::find($id_control_insumo);
+        
+        // Verificamos que exista y que SOLO sea falta o licencia (no tocamos pagos aquí)
+        if ($insumo && in_array($insumo->estado, ['falta', 'licencia'])) {
+            $insumo->update(['estado' => 'anulado']);
+            $this->dispatch('toast', ['icon' => 'success', 'title' => 'Acción deshecha. El alumno vuelve a estar sin registrar.']);
+        }
+    }
 }
