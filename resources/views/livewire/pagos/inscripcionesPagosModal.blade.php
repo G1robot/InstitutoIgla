@@ -128,7 +128,7 @@
                                     <div class="mt-5 flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                                         <div class="mt-5 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                                             {{-- CAMBIO FECHA --}}
-                                            <div class="mb-4 bg-orange-50 p-3 rounded-lg border border-orange-200">
+                                            <div class=" hidden mb-4 bg-orange-50 p-3 rounded-lg border border-orange-200">
                                                 <label class="block text-[10px] font-black text-orange-800 uppercase mb-1 flex items-center gap-1">
                                                     <i class="fa-solid fa-calendar-day"></i> Fecha del Pago (Modo Migración)
                                                 </label>
@@ -194,14 +194,25 @@
                                                     <th class="px-4 py-2 text-left font-bold text-gray-500">Fecha</th>
                                                     <th class="px-4 py-2 text-left font-bold text-gray-500">Ingreso Por</th>
                                                     <th class="px-4 py-2 text-right font-bold text-gray-500">Monto</th>
+                                                    <th class="px-4 py-2 text-center font-bold text-gray-500 w-20">Acción</th> {{-- CABECERA NUEVA --}}
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-gray-50">
                                                 @foreach($pagoSeleccionado->transacciones as $t)
-                                                    <tr class="hover:bg-gray-50 transition">
+                                                    <tr class="hover:bg-gray-50 transition" wire:key="trans-{{ $t->id_transaccion }}">
                                                         <td class="px-4 py-2 text-gray-500 font-mono text-xs">{{ \Carbon\Carbon::parse($t->fecha_transaccion)->format('d/m/Y H:i') }}</td>
                                                         <td class="px-4 py-2 font-bold text-gray-700">{{ $t->metodo->nombre }}</td>
                                                         <td class="px-4 py-2 text-right font-black text-blue-600">{{ number_format($t->monto, 2) }} Bs</td>
+                                                        
+                                                        {{-- COLUMNA NUEVA CON BOTÓN DE ELIMINAR --}}
+                                                        <td class="px-4 py-2 text-center">
+                                                            <button wire:click="anularTransaccionCuota({{ $t->id_transaccion }})"
+                                                                onclick="confirm('¿Estás completamente seguro de ANULAR este abono de {{ $t->monto }} Bs? Se restará del Arqueo de Caja y la deuda del alumno aumentará.') || event.stopImmediatePropagation()"
+                                                                class="text-gray-400 hover:text-red-500 p-1 rounded transition hover:bg-red-50" 
+                                                                title="Anular este cobro">
+                                                                <i class="fa-solid fa-trash-can text-xs"></i>
+                                                            </button>
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>

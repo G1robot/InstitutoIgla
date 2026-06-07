@@ -468,4 +468,57 @@ class InscripcionesPagos extends Component
             echo $pdf->output();
         }, $nombreArchivo);
     }
+    
+    public function anularTransaccionCuota($idTransaccion)
+    {
+        // 1. Validar que la caja esté abierta para hacer movimientos
+        $cajaAbierta = CajaModel::where('id_usuario', Auth::id())
+                            ->where('estado', 'abierta')
+                            ->first();
+            
+        if (!$cajaAbierta) {
+            $this->addError('general', 'No puedes anular transacciones si no tienes una caja abierta.');
+            return;
+        }
+
+        DB::transaction(function () use ($idTransaccion) {
+            // 2. Buscar la transacción a destruir
+            $transaccion = TransaccionModel::find($idTransaccion);
+
+            if ($transaccion) {
+                $pagoPadre = PagoModel::find($transaccion->id_pago);
+
+                if ($pagoPadre) {
+                    // 3. Revertir el dinero del acumulado del Pago Padre
+                    $nuevoAbonado = max(0, $pagoPadre->monto_abonado - $transaccion->monto);
+                    
+                    // Determinar el estado en base a si queda algo abonado o vuelve a 0
+                    $nuevoEstado = 'pendiente';
+                    if ($nuevoAbonado > 0) {
+                        $nuevoEstado = 'parcial';
+                    } else {
+                        // Si vuelve a 0 y ya venció la fecha, lo marcamos vencido
+                        if (Carbon::parse($pagoPadre->fecha_vencimiento)->isPast()) {
+                            $nuevoEstado = 'vencid'; // Se adaptará a tu string 'vencido'
+                        }
+                    }
+
+                    // Forzar 'vencido' si el string exacto en tu BD lleva la o
+                    $nuevoEstado = ($nuevoAbonado > 0) ? 'parcial' : (Carbon::parse($pagoPadre->fecha_vencimiento)->isPast() ? 'vencido' : 'pendiente');
+
+                    $pagoPadre->update([
+                        'monto_abonado' => $nuevoAbonado,
+                        'estado' => $nuevoEstado
+                    ]);
+                }
+
+                // 4. Borrar físicamente la transacción para limpiar el Arqueo de Caja
+                $transaccion->delete();
+            }
+        });
+
+        // 5. Refrescar la UI en tiempo real
+        $this->refrescarSeleccion();
+        $this->dispatch('toast', ['icon' => 'success', 'title' => 'Abono anulado y saldo de caja corregido.']);
+    }
 }
