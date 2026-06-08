@@ -311,7 +311,7 @@ class ControlInsumos extends Component
             $this->addError('multiple', 'No hay caja abierta.'); return;
         }
 
-        // Verificación de duplicados (Igual a tu código)
+        // Verificación de duplicados
         $semanasSeleccionadas = [];
         foreach($this->fechasMultiple as $fecha) {
             $inicioSemana = Carbon::parse($fecha)->startOfWeek()->format('Y-m-d');
@@ -379,39 +379,35 @@ class ControlInsumos extends Component
                 'estado' => 'pagado'
             ]);
 
-            // --- MAGIA DEL PAGO DIVIDIDO EN TRANSACCIONES ---
-            $metodosNombres = [];
-            foreach ($this->montosPago as $id_metodo => $monto) {
-                if ((float)$monto > 0) {
-                    TransaccionModel::create([
-                        'id_pago' => $pago->id_pago,
-                        'id_metodo_pago' => $id_metodo,
-                        'id_caja' => $cajaAbierta->id_caja,
-                        'monto' => (float)$monto,
-                        'fecha_transaccion' => Carbon::now()
-                    ]);
-                    $metodoModel = MetodoPagoModel::find($id_metodo);
-                    if($metodoModel) {
-                        $metodosNombres[] = $metodoModel->nombre;
-                    }
+            // ========================================================
+            // MAGIA 1: Descontar el cambio devuelto ANTES de guardar en BD
+            // ========================================================
+            $cambio = max(0, $totalIngresado - $totalCobrar);
+            $montosFinales = $this->montosPago;
+
+            if ($cambio > 0) {
+                $efectivo = MetodoPagoModel::where('nombre', 'like', '%Efectivo%')->first();
+                if ($efectivo && isset($montosFinales[$efectivo->id_metodo_pago])) {
+                    $montosFinales[$efectivo->id_metodo_pago] -= $cambio;
                 }
             }
 
-            $metodosUsados = []; // <-- Array para guardar los nombres y montos
-
-            foreach ($this->montosPago as $id_metodo => $monto) {
+            // ========================================================
+            // MAGIA 2: Único bucle para guardar transacciones reales
+            // ========================================================
+            $metodosUsados = [];
+            foreach ($montosFinales as $id_metodo => $monto) {
                 if ((float)$monto > 0) {
                     TransaccionModel::create([
                         'id_pago' => $pago->id_pago,
                         'id_metodo_pago' => $id_metodo,
                         'id_caja' => $cajaAbierta->id_caja,
-                        'monto' => (float)$monto,
+                        'monto' => (float)$monto, // Guarda la ganancia real neta
                         'fecha_transaccion' => Carbon::now()
                     ]);
                     
                     $metodoModel = MetodoPagoModel::find($id_metodo);
                     if($metodoModel) {
-                        // Guardamos ej: "Efectivo: 200.00 Bs"
                         $metodosUsados[] = $metodoModel->nombre . ': ' . number_format((float)$monto, 2) . ' Bs';
                     }
                 }
@@ -425,17 +421,16 @@ class ControlInsumos extends Component
                 'fecha' => Carbon::now()->format('d/m/Y H:i'),
                 'cajero' => Auth::user()->nombre ?? 'Administrador',
                 'items' => $itemsRecibo,
-                'total' => $totalCobrar,
-                'ingresado' => $totalIngresado, 
-                'cambio' => max(0, $totalIngresado - $totalCobrar),
-                'metodos_pago' => implode(' | ', $metodosUsados) // <-- ¡ENVIAMOS EL TEXTO AL RECIBO!
+                'total' => $totalCobrar,          // Ej: 60
+                'ingresado' => $totalIngresado,   // Ej: 100 (Billete dado)
+                'cambio' => $cambio,              // Ej: 40
+                'metodos_pago' => implode(' | ', $metodosUsados) // Ej: "Efectivo: 60.00 Bs"
             ];
         });
 
         $this->cerrarModalMultiple();
         $this->showModalExito = true;
     }
-
     public function render()
     {
         $search = mb_strtolower(trim($this->search));
