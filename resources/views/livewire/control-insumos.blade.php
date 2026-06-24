@@ -1,67 +1,44 @@
 <div class="px-4 pb-8">
     <div class="ocultar-al-imprimir">
         <div class="max-w-7xl mx-auto pb-10">
-            {{-- HEADER Y CONTROLES --}}
+            {{-- HEADER Y CONTROLES (LIMPIOS) --}}
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 relative z-20">
-                <div class="mb-8 border-l-4 border-orange-500 pl-4">
+                <div class="mb-4 md:mb-0 border-l-4 border-orange-500 pl-4">
                     <h2 class="text-2xl font-black text-gray-800 tracking-tight">CONTROL SEMANAL DE INSUMOS</h2>
-                    <p class="text-sm text-gray-500 mt-1">Registro rápido de pagos, faltas y licencias.</p>
+                    <p class="text-sm text-gray-500 mt-1">Registro rápido de faltas, licencias y cobros múltiples.</p>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
             
-                    {{-- NUEVO: Selector de Tipo de Insumo --}}
-                    <div class="relative w-full sm:w-auto min-w-[180px]">
+                    {{-- Selector de Tipo de Insumo (Único necesario para los precios) --}}
+                    <div class="relative w-full sm:w-auto min-w-[200px]">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-box text-gray-400"></i>
                         </div>
                         <select wire:model="articulo_seleccionado" 
-                            class="w-full pl-10 pr-3 py-2 border border-blue-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-blue-500 focus:border-blue-500 bg-blue-50 focus:bg-white transition" title="Tipo de Insumo a cobrar">
+                            class="w-full pl-10 pr-3 py-2.5 border border-blue-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-blue-500 focus:border-blue-500 bg-blue-50 focus:bg-white transition" title="Tipo de Insumo a cobrar">
                             @foreach($articulosInsumo as $art)
                                 <option value="{{ $art->id_articulo }}">{{ $art->nombre }} ({{ number_format($art->precio, 2) }} Bs)</option>
                             @endforeach
                         </select>
                     </div>
 
-                    {{-- Selector de Método de Pago --}}
-                    <div class="relative w-full sm:w-auto min-w-[140px]">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-wallet text-gray-400"></i>
-                        </div>
-                        <select wire:model="metodo_pago_seleccionado" 
-                            class="w-full pl-10 pr-3 py-2 border border-orange-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-orange-500 focus:border-orange-500 bg-orange-50 focus:bg-white transition" title="Método de pago">
-                            @foreach($metodosPago as $metodo)
-                                <option value="{{ $metodo->id_metodo_pago }}">{{ $metodo->nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Selector de Fecha --}}
-                    <div class="relative w-full sm:w-auto min-w-[150px]">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-regular fa-calendar text-gray-400"></i>
-                        </div>
-                        <input type="date" wire:model.live="fecha_semana" 
-                            class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-orange-500 focus:border-orange-500 bg-gray-50 focus:bg-white transition">
-                    </div>
-
                     {{-- Buscador --}}
-                    <div class="relative w-full sm:w-auto min-w-[200px]">
+                    <div class="relative w-full sm:w-auto min-w-[250px]">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
                         </div>
                         <input type="text" wire:model.live.debounce.300ms="search" 
-                            class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500" placeholder="Buscar alumno...">
+                            class="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500 shadow-sm" placeholder="Buscar alumno...">
                     </div>
                 </div>
             </div>
 
             @error('general') 
-                <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm">
                     <p class="text-red-700 font-bold text-sm"><i class="fa-solid fa-triangle-exclamation mr-1"></i> {{ $message }}</p>
                 </div>
             @enderror
-        
 
             {{-- TABLA DE REGISTRO --}}
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -69,22 +46,21 @@
                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left font-bold text-gray-500 uppercase tracking-wider">Estudiante</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-500 uppercase tracking-wider w-40">Estado de Semana</th>
-                                <th class="px-6 py-3 text-center font-bold text-gray-500 uppercase tracking-wider">Acciones Rápidas</th>
+                                <th class="px-6 py-4 text-left font-bold text-gray-500 uppercase tracking-wider">Estudiante</th>
+                                <th class="px-6 py-4 text-center font-bold text-gray-500 uppercase tracking-wider w-40">Estado (Semana Actual)</th>
+                                <th class="px-6 py-4 text-center font-bold text-gray-500 uppercase tracking-wider">Acciones Rápidas</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 bg-white">
                             @forelse($estudiantes as $est)
                                 @php
-                                    // Verificamos si ya tiene registro en esta semana
                                     $registroActual = $est->controlInsumos->first();
                                 @endphp
                                 
                                 <tr wire:key="estudiante-{{ $est->id_estudiante }}" class="hover:bg-orange-50/50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="font-bold text-gray-900">{{ $est->apellido }} {{ $est->nombre }}</div>
-                                        <div class="text-xs text-gray-500">CI: {{ $est->ci }}</div>
+                                        <div class="font-bold text-gray-900 text-base">{{ $est->apellido }} {{ $est->nombre }}</div>
+                                        <div class="text-xs text-gray-500 font-mono mt-0.5">CI: {{ $est->ci }}</div>
                                     </td>
 
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -94,7 +70,6 @@
                                                     <i class="fa-solid fa-check-double mr-1"></i> PAGADO
                                                 </span>
                                             @elseif($registroActual->estado === 'pendiente' && $registroActual->id_venta)
-                                                {{-- MAGIA: Si está pendiente pero tiene Venta, significa que es un PAGO PARCIAL --}}
                                                 @php $pago = $registroActual->venta->pago; @endphp
                                                 <div class="flex flex-col items-center">
                                                     <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-[10px] font-black tracking-widest border border-yellow-300 shadow-sm">
@@ -119,51 +94,44 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex justify-center items-center gap-2">
                                             @if(!$registroActual)
-                                                {{-- BOTONES DE REGISTRO RÁPIDO --}}
-                                                <button wire:click="registrarEstado({{ $est->id_estudiante }}, 'pagado')" wire:loading.attr="disabled"
-                                                    class="bg-green-50 text-green-600 hover:bg-green-600 hover:text-white px-3 py-1.5 rounded-lg transition border border-green-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Cobrar Insumo">
-                                                    <i class="fa-solid fa-sack-dollar"></i> Cobrar
-                                                </button>
-
                                                 <button wire:click="abrirModalAbono({{ $est->id_estudiante }})" wire:loading.attr="disabled"
-                                                    class="bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white px-2.5 py-1.5 rounded-lg transition border border-yellow-200 text-xs font-bold" title="Abonar (Pago Parcial)">
-                                                    <i class="fa-solid fa-coins"></i> Abonar
+                                                    class="bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white px-3 py-2 rounded-lg transition border border-yellow-200 text-xs font-bold shadow-sm" title="Abonar (Pago Parcial)">
+                                                    <i class="fa-solid fa-coins mr-1"></i> Abonar
                                                 </button>
                                                 
                                                 <button wire:click="registrarEstado({{ $est->id_estudiante }}, 'falta')" wire:loading.attr="disabled"
-                                                    class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition border border-red-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Marcar Falta">
-                                                    <i class="fa-solid fa-user-xmark"></i> Falta
+                                                    class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-3 py-2 rounded-lg transition border border-red-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Marcar Falta">
+                                                    <i class="fa-solid fa-user-xmark mr-1"></i> Falta
                                                 </button>
 
                                                 <button wire:click="registrarEstado({{ $est->id_estudiante }}, 'licencia')" wire:loading.attr="disabled"
-                                                    class="bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white px-3 py-1.5 rounded-lg transition border border-yellow-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Licencia">
-                                                    <i class="fa-solid fa-notes-medical"></i> Lic.
+                                                    class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-lg transition border border-blue-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Licencia">
+                                                    <i class="fa-solid fa-notes-medical mr-1"></i> Lic.
                                                 </button>
                                             @elseif($registroActual->estado === 'pendiente' && $registroActual->id_venta)
-                                                {{-- Ya dio un abono, botón para COMPLETAR EL PAGO --}}
                                                 <button wire:click="abrirModalAbono({{ $est->id_estudiante }}, {{ $registroActual->id_control_insumo }})" wire:loading.attr="disabled"
-                                                    class="bg-green-500 text-white hover:bg-green-700 px-3 py-1.5 rounded-lg transition shadow-md text-xs font-bold animate-pulse" title="Completar deuda">
-                                                    <i class="fa-solid fa-hand-holding-dollar"></i> Completar Pago
+                                                    class="bg-green-500 text-white hover:bg-green-700 px-4 py-2 rounded-lg transition shadow-md text-xs font-bold animate-pulse" title="Completar deuda">
+                                                    <i class="fa-solid fa-hand-holding-dollar mr-1"></i> Completar Pago
                                                 </button>
                                                 
-                                            {{-- NUEVO BLOQUE: BOTÓN DESHACER PARA FALTA O LICENCIA --}}
                                             @elseif($registroActual->estado === 'falta' || $registroActual->estado === 'licencia')
                                                 <button wire:click="anularEstadoInsumo({{ $registroActual->id_control_insumo }})" 
                                                     onclick="confirm('¿Estás seguro de deshacer esta acción?') || event.stopImmediatePropagation()"
                                                     wire:loading.attr="disabled"
-                                                    class="bg-gray-100 text-gray-600 hover:bg-gray-800 hover:text-white px-3 py-1.5 rounded-lg transition border border-gray-200 shadow-sm text-xs font-bold" title="Deshacer y volver a registrar">
-                                                    <i class="fa-solid fa-rotate-left"></i> Deshacer
+                                                    class="bg-gray-100 text-gray-600 hover:bg-gray-800 hover:text-white px-3 py-2 rounded-lg transition border border-gray-200 shadow-sm text-xs font-bold" title="Deshacer y volver a registrar">
+                                                    <i class="fa-solid fa-rotate-left mr-1"></i> Deshacer
                                                 </button>
                                             @endif
 
+                                            <div class="h-6 w-px bg-gray-200 mx-1"></div>
+
                                             <button wire:click="abrirCobroMultiple({{ $est->id_estudiante }})" wire:loading.attr="disabled"
-                                                class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg transition border border-blue-200 shadow-sm text-xs font-bold disabled:opacity-50 ml-1" title="Cobrar Múltiples Semanas">
-                                                <i class="fa-solid fa-layer-group"></i> Múltiple
+                                                class="bg-gray-800 text-white hover:bg-black px-4 py-2 rounded-lg transition shadow-md text-xs font-bold disabled:opacity-50" title="Cobrar Múltiples Semanas">
+                                                <i class="fa-solid fa-layer-group mr-1"></i> Múltiple
                                             </button>
 
-                                            {{-- BOTÓN HISTORIAL (Siempre visible) --}}
                                             <button wire:click="abrirHistorial({{ $est->id_estudiante }})" wire:loading.attr="disabled"
-                                                class="bg-gray-50 text-gray-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg transition border border-gray-200 shadow-sm text-xs font-bold disabled:opacity-50 ml-2" title="Ver Historial">
+                                                class="bg-gray-50 text-gray-600 hover:bg-blue-600 hover:text-white w-9 h-9 flex items-center justify-center rounded-lg transition border border-gray-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Ver Historial">
                                                 <i class="fa-solid fa-clock-rotate-left"></i>
                                             </button>
                                         </div>
@@ -171,7 +139,10 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="px-6 py-8 text-center text-gray-500">No se encontraron estudiantes.</td>
+                                    <td colspan="3" class="px-6 py-12 text-center text-gray-500">
+                                        <i class="fa-solid fa-user-slash text-4xl mb-3 text-gray-300"></i>
+                                        <p>No se encontraron estudiantes activos con esa búsqueda.</p>
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -188,72 +159,73 @@
         @if($showModalHistorial)
             <div class="fixed inset-0 z-50 overflow-y-auto">
                 <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-                    <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" wire:click="cerrarHistorial"></div>
+                    <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75 backdrop-blur-sm" wire:click="cerrarHistorial"></div>
 
                     <div class="relative inline-block w-full max-w-lg p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl animate-fade-in-up">
                         <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
                             <div>
                                 <h3 class="text-lg font-black text-gray-800 uppercase">Historial de Insumos</h3>
-                                <p class="text-sm text-gray-500">{{ $estudianteHistorial->nombre }} {{ $estudianteHistorial->apellido }}</p>
+                                <p class="text-sm text-gray-500 font-bold">{{ $estudianteHistorial->nombre }} {{ $estudianteHistorial->apellido }}</p>
                             </div>
-                            <button wire:click="cerrarHistorial" class="text-gray-400 hover:text-red-500 transition">
-                                <i class="fa-solid fa-xmark text-xl"></i>
+                            <button wire:click="cerrarHistorial" class="text-gray-400 hover:text-red-500 transition w-8 h-8 rounded-full bg-gray-50 hover:bg-red-50 flex items-center justify-center">
+                                <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
 
-                        <div class="max-h-96 overflow-y-auto pr-2">
+                        <div class="max-h-96 overflow-y-auto custom-scrollbar pr-2">
                             @forelse($historialInsumos as $historial)
-                                <div wire:key="historial-{{ $historial->id_control_insumo }}" class="flex justify-between items-center p-3 mb-2 bg-gray-50 rounded-lg border border-gray-100">
+                                <div wire:key="historial-{{ $historial->id_control_insumo }}" class="flex justify-between items-center p-3 mb-2 bg-white rounded-lg border border-gray-200 shadow-sm hover:border-blue-300 transition">
                                     <div>
-                                        <span class="block font-bold text-gray-800 text-sm">
+                                        <span class="block font-black text-gray-800 text-sm">
                                             <i class="fa-regular fa-calendar-days text-gray-400 mr-1"></i> 
                                             {{ \Carbon\Carbon::parse($historial->fecha_semana)->format('d / m / Y') }}
                                         </span>
                                         @if($historial->id_venta)
-                                            <span class="text-[10px] text-gray-400 font-mono">Recibo Venta #{{ $historial->id_venta }}</span>
+                                            <span class="text-[10px] text-gray-400 font-mono font-bold tracking-wide">RECIBO #{{ str_pad($historial->id_venta, 6, '0', STR_PAD_LEFT) }}</span>
                                         @endif
                                     </div>
                                     <div>
                                         @if($historial->estado === 'pagado')
-                                            <span class="text-green-600 font-bold text-xs bg-green-100 px-2 py-1 rounded border border-green-200"><i class="fa-solid fa-check"></i> Pagado</span>
+                                            <span class="text-green-600 font-black text-[10px] uppercase tracking-wider bg-green-50 px-2.5 py-1 rounded-md border border-green-200"><i class="fa-solid fa-check"></i> Pagado</span>
                                         @elseif($historial->estado === 'pendiente' && $historial->id_venta)
-                                            <span class="text-yellow-700 font-bold text-xs bg-yellow-100 px-2 py-1 rounded border border-yellow-300"><i class="fa-solid fa-circle-half-stroke"></i> Abono Parcial</span>
+                                            <span class="text-yellow-700 font-black text-[10px] uppercase tracking-wider bg-yellow-50 px-2.5 py-1 rounded-md border border-yellow-300"><i class="fa-solid fa-circle-half-stroke"></i> Abono Parcial</span>
                                         @elseif($historial->estado === 'falta')
-                                            <span class="text-red-600 font-bold text-xs bg-red-100 px-2 py-1 rounded border border-red-200"><i class="fa-solid fa-xmark"></i> Falta</span>
+                                            <span class="text-red-600 font-black text-[10px] uppercase tracking-wider bg-red-50 px-2.5 py-1 rounded-md border border-red-200"><i class="fa-solid fa-xmark"></i> Falta</span>
                                         @elseif($historial->estado === 'licencia')
-                                            <span class="text-blue-600 font-bold text-xs bg-blue-100 px-2 py-1 rounded border border-blue-200"><i class="fa-solid fa-hand-holding-medical"></i> Licencia</span>
+                                            <span class="text-blue-600 font-black text-[10px] uppercase tracking-wider bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200"><i class="fa-solid fa-hand-holding-medical"></i> Licencia</span>
                                         @else
-                                            <span class="text-gray-500 font-bold text-xs bg-gray-100 px-2 py-1 rounded"><i class="fa-solid fa-clock"></i> Pendiente</span>
+                                            <span class="text-gray-500 font-black text-[10px] uppercase tracking-wider bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200"><i class="fa-solid fa-clock"></i> Pendiente</span>
                                         @endif
                                     </div>
                                 </div>
                             @empty
-                                <div class="text-center py-5 text-gray-400 text-sm">No hay registros previos para este alumno.</div>
+                                <div class="text-center py-8 text-gray-400 text-sm italic">No hay registros previos para este alumno.</div>
                             @endforelse
                         </div>
                     </div>
                 </div>
             </div>
         @endif
+
         {{-- MODAL DE COBRO MÚLTIPLE --}}
         @if($showModalMultiple)
         <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" wire:click="cerrarModalMultiple"></div>
+                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75 backdrop-blur-sm" wire:click="cerrarModalMultiple"></div>
 
                 <div class="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl animate-fade-in-up">
                     <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
                         <div>
                             <h3 class="text-lg font-black text-gray-800 uppercase"><i class="fa-solid fa-layer-group text-blue-500 mr-2"></i> Cobro Múltiple</h3>
-                            <p class="text-sm text-gray-500">{{ $estudianteMultiple->nombre }} {{ $estudianteMultiple->apellido }}</p>
+                            <p class="text-sm text-gray-500 font-bold">{{ $estudianteMultiple->nombre }} {{ $estudianteMultiple->apellido }}</p>
                         </div>
-                        <button wire:click="cerrarModalMultiple" class="text-gray-400 hover:text-red-500 transition">
+                        <button wire:click="cerrarModalMultiple" class="text-gray-400 hover:text-red-500 transition w-8 h-8 rounded-full bg-gray-50 hover:bg-red-50 flex items-center justify-center">
                             <i class="fa-solid fa-xmark text-xl"></i>
                         </button>
                     </div>
 
                     @error('multiple') 
-                        <div class="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold border border-red-200">
+                        <div class="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold border border-red-200 shadow-sm">
                             <i class="fa-solid fa-triangle-exclamation mr-1"></i> {{ $message }}
                         </div>
                     @enderror
@@ -263,9 +235,14 @@
                         <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
                             @foreach($fechasMultiple as $index => $fecha)
                                 <div class="flex items-center gap-2">
-                                    <input type="date" wire:model="fechasMultiple.{{ $index }}" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-blue-500 focus:border-blue-500">
+                                    <div class="relative flex-1">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fa-regular fa-calendar text-gray-400"></i>
+                                        </div>
+                                        <input type="date" wire:model="fechasMultiple.{{ $index }}" class="w-full pl-10 px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+                                    </div>
                                     @if(count($fechasMultiple) > 1)
-                                        <button wire:click="quitarFechaMultiple({{ $index }})" class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white w-9 h-9 rounded-lg flex items-center justify-center transition border border-red-200">
+                                        <button wire:click="quitarFechaMultiple({{ $index }})" class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white w-10 h-10 rounded-lg flex items-center justify-center transition border border-red-200 shadow-sm">
                                             <i class="fa-solid fa-trash-can"></i>
                                         </button>
                                     @endif
@@ -273,7 +250,7 @@
                             @endforeach
                         </div>
                         
-                        <button wire:click="agregarFechaMultiple" class="mt-3 w-full border-2 border-dashed border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-600 py-2 rounded-lg font-bold text-sm transition">
+                        <button wire:click="agregarFechaMultiple" class="mt-3 w-full border-2 border-dashed border-blue-300 bg-blue-50/50 text-blue-600 hover:border-blue-500 hover:bg-blue-100 py-2.5 rounded-xl font-bold text-sm transition shadow-sm">
                             <i class="fa-solid fa-plus mr-1"></i> Añadir otra semana
                         </button>
                     </div>
@@ -281,20 +258,18 @@
                     @php
                         $art = \App\Models\ArticuloModel::find($articulo_seleccionado);
                         $totalModal = $art ? $art->precio * count($fechasMultiple) : 0;
-                        
-                        // Añadimos $this-> y validamos que $v no esté vacío
                         $totalIngresado = collect($this->montosPago ?? [])->map(fn($v) => (float)($v ?: 0))->sum();
                     @endphp
 
                     {{-- RESUMEN DEL COBRO --}}
-                    <div class="flex justify-between items-end mb-4 border-b pb-2">
-                        <span class="text-sm font-bold text-gray-500 uppercase">A Pagar:</span>
-                        <span class="text-2xl font-black text-gray-800">{{ number_format($totalModal, 2) }} <span class="text-sm">Bs</span></span>
+                    <div class="flex justify-between items-end mb-4 border-b border-gray-200 pb-3">
+                        <span class="text-xs font-black text-gray-400 uppercase tracking-widest">A Pagar:</span>
+                        <span class="text-3xl font-black text-gray-800 leading-none">{{ number_format($totalModal, 2) }} <span class="text-sm text-gray-500">Bs</span></span>
                     </div>
 
                     {{-- BLOQUE DE PAGOS MÚLTIPLES --}}
-                    <div class="space-y-3 mb-6 bg-gray-50 p-3 rounded-xl border border-gray-200">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-wallet mr-1"></i> ¿Cómo pagará el estudiante?</label>
+                    <div class="space-y-3 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-inner">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-wallet mr-1"></i> Desglose de Pago (Caja)</label>
                         
                         @foreach($metodosPago as $metodo)
                             <div class="flex shadow-sm rounded-lg overflow-hidden border border-gray-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all bg-white">
@@ -302,21 +277,21 @@
                                     {{ $metodo->nombre }}
                                 </span>
                                 <input type="number" step="0.50" wire:model.live.debounce.500ms="montosPago.{{ $metodo->id_metodo_pago }}" 
-                                    class="flex-1 w-full px-3 py-2 border-none text-sm font-bold text-gray-800 focus:ring-0 bg-transparent text-right" 
+                                    class="flex-1 w-full px-3 py-2.5 border-none text-sm font-black text-gray-800 focus:ring-0 bg-transparent text-right" 
                                     placeholder="0.00">
-                                <button wire:click="llenarSaldo({{ $metodo->id_metodo_pago }})" class="px-3 bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition border-l border-blue-200" title="Autocompletar saldo restante">
+                                <button wire:click="llenarSaldo({{ $metodo->id_metodo_pago }})" class="px-4 bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition border-l border-blue-200" title="Autocompletar saldo restante">
                                     <i class="fa-solid fa-reply"></i>
                                 </button>
                             </div>
                         @endforeach
                         
                         <div class="flex justify-between text-xs pt-3 border-t border-gray-200 mt-2">
-                            <span>Ingresado: <strong class="{{ $totalIngresado >= $totalModal - 0.05 ? 'text-green-600' : 'text-red-500' }} font-mono text-sm">{{ number_format($totalIngresado, 2) }}</strong></span>
-                            <span>Cambio: <strong class="font-mono text-sm text-gray-800">{{ number_format(max(0, $totalIngresado - $totalModal), 2) }}</strong></span>
+                            <span class="font-bold text-gray-500 uppercase">Ingresado: <strong class="{{ $totalIngresado >= $totalModal - 0.05 ? 'text-green-600' : 'text-red-500' }} font-mono text-sm ml-1">{{ number_format($totalIngresado, 2) }}</strong></span>
+                            <span class="font-bold text-gray-500 uppercase">Cambio: <strong class="font-mono text-sm text-gray-800 ml-1">{{ number_format(max(0, $totalIngresado - $totalModal), 2) }}</strong></span>
                         </div>
                     </div>
 
-                    <button wire:click="procesarCobroMultiple" wire:loading.attr="disabled" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50">
+                    <button wire:click="procesarCobroMultiple" wire:loading.attr="disabled" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50">
                         <span wire:loading.remove wire:target="procesarCobroMultiple"><i class="fa-solid fa-cash-register"></i> Procesar y Generar Recibo</span>
                         <span wire:loading wire:target="procesarCobroMultiple"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
                     </button>
@@ -324,11 +299,12 @@
             </div>
         </div>
         @endif
+
         {{-- MODAL PARA ABONOS / PAGOS PARCIALES --}}
         @if($showModalAbono)
         <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" wire:click="cerrarModalAbono"></div>
+                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75 backdrop-blur-sm" wire:click="cerrarModalAbono"></div>
 
                 <div class="relative inline-block w-full max-w-sm p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl animate-fade-in-up">
                     <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
@@ -336,34 +312,51 @@
                             <h3 class="text-lg font-black text-gray-800 uppercase">
                                 <i class="fa-solid fa-coins text-yellow-500 mr-2"></i> {{ $controlInsumoActivo ? 'Completar Deuda' : 'Registrar Abono' }}
                             </h3>
-                            <p class="text-sm text-gray-500">{{ $estudianteAbono->nombre ?? '' }}</p>
+                            <p class="text-sm text-gray-500 font-bold">{{ $estudianteAbono->nombre ?? '' }} {{ $estudianteAbono->apellido ?? '' }}</p>
                         </div>
-                        <button wire:click="cerrarModalAbono" class="text-gray-400 hover:text-red-500 transition">
-                            <i class="fa-solid fa-xmark text-xl"></i>
+                        <button wire:click="cerrarModalAbono" class="text-gray-400 hover:text-red-500 transition w-8 h-8 rounded-full bg-gray-50 hover:bg-red-50 flex items-center justify-center">
+                            <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
 
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-5 flex justify-between items-center">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-5 flex justify-between items-center shadow-sm">
                         <div>
-                            <span class="block text-xs font-bold text-yellow-700 uppercase">Deuda Actual</span>
-                            <span class="text-2xl font-black text-yellow-800">{{ number_format($deuda_actual, 2) }} <span class="text-sm">Bs</span></span>
+                            <span class="block text-[10px] font-black text-yellow-700 uppercase tracking-widest">Deuda Actual</span>
+                            <span class="text-3xl font-black text-yellow-800 leading-none">{{ number_format($deuda_actual, 2) }} <span class="text-sm text-yellow-600">Bs</span></span>
                         </div>
-                        <i class="fa-solid fa-file-invoice-dollar text-3xl text-yellow-300"></i>
+                        <i class="fa-solid fa-file-invoice-dollar text-4xl text-yellow-300 opacity-50"></i>
                     </div>
 
-                    <div class="mb-5">
+                    <div class="mb-4">
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Monto que está pagando AHORA:</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 font-bold">Bs</span>
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <span class="text-gray-400 font-black">Bs</span>
                             </div>
-                            <input type="number" step="0.50" wire:model="monto_a_abonar" class="w-full pl-10 pr-3 py-3 border-2 border-gray-300 rounded-xl text-lg font-black text-gray-800 focus:ring-yellow-500 focus:border-yellow-500 transition shadow-inner" placeholder="0.00">
+                            {{-- MAGIA DEL BLUR APLICADA AQUÍ --}}
+                            <input type="number" step="0.50" wire:model.blur="monto_a_abonar" class="w-full pl-12 pr-3 py-3.5 border-2 border-gray-300 rounded-xl text-xl font-black text-gray-800 focus:ring-yellow-500 focus:border-yellow-500 transition shadow-inner" placeholder="0.00">
                         </div>
                         @error('abono') <span class="text-red-500 text-xs font-bold mt-2 block"><i class="fa-solid fa-triangle-exclamation"></i> {{ $message }}</span> @enderror
                     </div>
 
-                    <button wire:click="procesarAbono" wire:loading.attr="disabled" class="w-full bg-gray-800 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50">
-                        <span wire:loading.remove wire:target="procesarAbono">Registrar Abono en Caja</span>
+                    {{-- NUEVO: SELECTOR DE MÉTODO DE PAGO MOVIDO AQUÍ ADENTRO --}}
+                    <div class="mb-6">
+                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">¿Cómo está pagando este abono?</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-wallet text-gray-400"></i>
+                            </div>
+                            <select wire:model="metodo_pago_seleccionado" class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl text-sm font-bold text-gray-700 focus:ring-yellow-500 focus:border-yellow-500 bg-gray-50 focus:bg-white transition shadow-sm">
+                                <option value="">Seleccione un método...</option>
+                                @foreach($metodosPago as $metodo)
+                                    <option value="{{ $metodo->id_metodo_pago }}">{{ $metodo->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <button wire:click="procesarAbono" wire:loading.attr="disabled" class="w-full bg-gray-800 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50">
+                        <span wire:loading.remove wire:target="procesarAbono"><i class="fa-solid fa-coins"></i> Registrar Abono en Caja</span>
                         <span wire:loading wire:target="procesarAbono"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
                     </button>
                 </div>
@@ -371,6 +364,7 @@
         </div>
         @endif
     </div>
+
     {{-- ========================================== --}}
     {{-- MODAL DE ÉXITO (MODO PANTALLA)             --}}
     {{-- ========================================== --}}
@@ -384,16 +378,16 @@
             <p class="text-gray-500 mb-8 text-sm">El recibo #{{ str_pad($ultimoIdVenta, 6, '0', STR_PAD_LEFT) }} se guardó correctamente en caja.</p>
             
             <div class="flex flex-col gap-3">
-                <button onclick="window.print()" class="bg-gray-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition w-full flex items-center justify-center gap-2 shadow-lg">
+                <button onclick="window.print()" class="bg-gray-800 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-black transition w-full flex items-center justify-center gap-2 shadow-lg">
                     <i class="fa-solid fa-print"></i> Imprimir Recibo
                 </button>
 
-                <button wire:click="descargarReciboPdf" wire:loading.attr="disabled" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition w-full flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
+                <button wire:click="descargarReciboPdf" wire:loading.attr="disabled" class="bg-blue-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-blue-700 transition w-full flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
                     <span wire:loading.remove wire:target="descargarReciboPdf"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</span>
                     <span wire:loading wire:target="descargarReciboPdf"><i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...</span>
                 </button>
 
-                <button wire:click="cerrarModalExito" class="bg-green-100 text-green-700 px-6 py-3 rounded-xl font-bold hover:bg-green-200 transition w-full">
+                <button wire:click="cerrarModalExito" class="bg-green-50 border border-green-200 text-green-700 px-6 py-3.5 rounded-xl font-bold hover:bg-green-100 transition w-full mt-2">
                     Siguiente Alumno
                 </button>
             </div>

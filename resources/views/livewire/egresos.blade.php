@@ -130,17 +130,28 @@
             {{-- COLUMNA DERECHA: LISTADO DE EGRESOS --}}
             <div class="lg:col-span-2">
                 {{-- Filtros --}}
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 bg-white p-3 rounded-xl shadow-sm border border-gray-100 gap-4">
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <span class="text-sm font-bold text-gray-500"><i class="fa-regular fa-calendar text-red-400"></i> Mes:</span>
-                        <input type="month" wire:model.live="mesFilter" class="border border-gray-200 rounded-lg p-2 text-sm text-gray-700 font-bold focus:ring-red-500 focus:border-red-500">
+                <div class="flex flex-col lg:flex-row justify-between items-center mb-4 bg-white p-3 rounded-xl shadow-sm border border-gray-100 gap-4">
+                    
+                    {{-- Rango de Fechas (Desde / Hasta) --}}
+                    <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-calendar-day text-red-400"></i> Desde:</span>
+                            <input type="date" wire:model.live="fecha_inicio" 
+                                class="border border-gray-200 rounded-lg p-2 text-sm text-gray-700 font-bold focus:ring-red-500 focus:border-red-500 bg-gray-50 focus:bg-white transition shadow-inner">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-calendar-day text-red-400"></i> Hasta:</span>
+                            <input type="date" wire:model.live="fecha_fin" 
+                                class="border border-gray-200 rounded-lg p-2 text-sm text-gray-700 font-bold focus:ring-red-500 focus:border-red-500 bg-gray-50 focus:bg-white transition shadow-inner">
+                        </div>
                     </div>
+
+                    {{-- Input de Búsqueda --}}
                     <div class="relative w-full sm:w-72">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400"></i>
                         </div>
                         <input type="text" wire:model.live.debounce.300ms="search" placeholder="Buscar gasto..."
-
                             class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm bg-gray-50 focus:bg-white transition-shadow">
                     </div>
                 </div>

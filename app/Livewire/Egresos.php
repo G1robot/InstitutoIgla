@@ -34,7 +34,6 @@ class Egresos extends Component
     public $proveedores = [];
 
     public $search = '';
-    public $mesFilter;
 
     public $showModalProveedor = false;
     public $nuevo_proveedor_nombre = '';
@@ -43,12 +42,27 @@ class Egresos extends Component
     public $egresoSeleccionado = null;
     public $showModalDetalle = false;
 
+    public $fecha_inicio;
+    public $fecha_fin;
+
     public function mount()
     {
         $this->fecha_egreso = Carbon::now()->format('Y-m-d\TH:i');
         $this->metodosPago = MetodoPagoModel::where('activo', true)->get();
         $this->cargarProveedores();
-        $this->mesFilter = Carbon::now()->format('Y-m');
+        
+        $this->fecha_inicio = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->fecha_fin = Carbon::now()->format('Y-m-d');
+    }
+
+    public function updatingFechaInicio()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFechaFin()
+    {
+        $this->resetPage();
     }
 
     public function cargarProveedores()
@@ -60,9 +74,11 @@ class Egresos extends Component
     {
         $egresos = EgresoModel::with(['proveedor', 'metodoPago'])
             ->whereRaw("LOWER(concepto) like ?", ['%' . strtolower($this->search) . '%'])
-            ->where('fecha_egreso', 'like', $this->mesFilter . '%')
+            ->whereDate('fecha_egreso', '>=', $this->fecha_inicio)
+            ->whereDate('fecha_egreso', '<=', $this->fecha_fin)
             ->orderBy('fecha_egreso', 'desc')
             ->paginate(10);
+            
         return view('livewire.egresos', compact('egresos'));
     }
 

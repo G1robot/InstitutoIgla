@@ -16,6 +16,9 @@
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="Buscar estudiante, plan o CI..." 
                     class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow bg-white text-sm shadow-sm">
             </div>
+            <button wire:click="abrirPagosHoy" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-sm flex items-center justify-center gap-2 transition w-full md:w-auto">
+                <i class="fa-solid fa-calendar-day"></i> Cobros de Hoy
+            </button>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -251,6 +254,66 @@
                 Documento emitido por el sistema informático. Este extracto es meramente informativo.
             </div>
         </div>
+    @endif
+
+    {{-- ========================================== --}}
+    {{-- MODAL: COBROS REALIZADOS HOY               --}}
+    {{-- ========================================== --}}
+    @if($showModalPagosHoy)
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm animate-fade-in-down ocultar-al-imprimir">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative max-h-[90vh] flex flex-col">
+            
+            <button wire:click="cerrarPagosHoy" class="absolute top-4 right-4 bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full w-8 h-8 flex items-center justify-center transition font-bold z-10">✕</button>
+
+            <h3 class="text-xl font-black mb-4 text-gray-800 tracking-tight border-b border-gray-100 pb-4">
+                <i class="fa-solid fa-cash-register text-blue-500 mr-2"></i> Recaudación de Cuotas 
+                <span class="text-sm font-bold text-gray-400 ml-2">(Hoy: {{ \Carbon\Carbon::now()->format('d/m/Y') }})</span>
+            </h3>
+
+            <div class="overflow-y-auto custom-scrollbar flex-1 mb-5 border border-gray-200 rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
+                    <thead class="bg-gray-50 sticky top-0 shadow-sm">
+                        <tr>
+                            <th class="py-3 px-4 font-black text-gray-500 uppercase tracking-wider text-xs">Hora</th>
+                            <th class="py-3 px-4 font-black text-gray-500 uppercase tracking-wider text-xs">Estudiante</th>
+                            <th class="py-3 px-4 font-black text-gray-500 uppercase tracking-wider text-xs">Concepto</th>
+                            <th class="py-3 px-4 font-black text-gray-500 uppercase tracking-wider text-xs">Método</th>
+                            <th class="py-3 px-4 font-black text-gray-500 uppercase tracking-wider text-xs text-right">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($pagosHoy as $t)
+                        <tr class="hover:bg-blue-50 transition-colors">
+                            <td class="py-3 px-4 text-gray-500 font-mono">{{ \Carbon\Carbon::parse($t->fecha_transaccion)->format('H:i') }}</td>
+                            <td class="py-3 px-4 font-bold text-gray-800">
+                                {{ $t->pago->origen->estudiante->nombre ?? 'N/A' }} {{ $t->pago->origen->estudiante->apellido ?? '' }}
+                            </td>
+                            <td class="py-3 px-4 text-gray-600 font-medium">{{ $t->pago->descripcion }}</td>
+                            <td class="py-3 px-4 text-gray-600">
+                                <span class="bg-gray-100 border border-gray-200 text-gray-700 px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider">
+                                    {{ $t->metodo->nombre }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right font-black text-blue-600 text-base">{{ number_format($t->monto, 2) }} Bs</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="py-10 text-center text-gray-400">
+                                <i class="fa-solid fa-folder-open text-3xl mb-2 text-gray-300"></i>
+                                <p class="italic">No se han registrado cobros de cuotas el día de hoy.</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-xl flex justify-between items-center shadow-inner">
+                <span class="font-black text-gray-300 uppercase tracking-widest text-xs">Total Cuotas Hoy:</span>
+                <span class="font-black text-2xl text-green-400">{{ number_format($totalPagosHoy, 2) }} Bs</span>
+            </div>
+        </div>
+    </div>
     @endif
 
     {{-- ========================================== --}}

@@ -44,6 +44,10 @@ class InscripcionesPagos extends Component
     ///CAMBIO FECHA
     public $fechaPagoManual = null;
 
+    public $showModalPagosHoy = false;
+    public $pagosHoy = [];
+    public $totalPagosHoy = 0;
+
     protected $listeners = ['refreshComponent' => '$refresh'];
 
     public function mount() {
@@ -521,4 +525,30 @@ class InscripcionesPagos extends Component
         $this->refrescarSeleccion();
         $this->dispatch('toast', ['icon' => 'success', 'title' => 'Abono anulado y saldo de caja corregido.']);
     }
+
+    public function abrirPagosHoy() 
+    {
+        // Buscamos todas las transacciones de hoy que pertenezcan a pagos de Inscripciones
+        $this->pagosHoy = TransaccionModel::with(['metodo', 'pago.origen.estudiante'])
+            ->whereDate('fecha_transaccion', Carbon::now()->format('Y-m-d'))
+            ->whereHas('pago', function($q) {
+                $q->where('origen_type', InscripcionModel::class)
+                  ->where('estado', '!=', 'anulado'); // Por si acaso ignoramos anulados
+            })
+            ->orderBy('fecha_transaccion', 'desc')
+            ->get();
+
+        // Sumamos el total recaudado
+        $this->totalPagosHoy = $this->pagosHoy->sum('monto');
+        
+        $this->showModalPagosHoy = true;
+    }
+
+    public function cerrarPagosHoy() 
+    {
+        $this->showModalPagosHoy = false;
+        $this->pagosHoy = [];
+        $this->totalPagosHoy = 0;
+    }
+    
 }

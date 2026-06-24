@@ -33,7 +33,8 @@ class OtrosIngresos extends Component
     public $metodosPago = [];
 
     public $search = '';
-    public $mesFilter;
+    public $fecha_inicio;
+    public $fecha_fin;
 
     public $ultimoIngresoId = null;
 
@@ -45,16 +46,32 @@ class OtrosIngresos extends Component
     {
         $this->fecha_ingreso = Carbon::now()->format('Y-m-d\TH:i');
         $this->metodosPago = MetodoPagoModel::where('activo', true)->get();
-        $this->mesFilter = Carbon::now()->format('Y-m');
+        
+        // 2. Rango por defecto (Mes actual)
+        $this->fecha_inicio = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->fecha_fin = Carbon::now()->format('Y-m-d');
+    }
+
+    // 3. Funciones para resetear la paginación al cambiar fechas
+    public function updatingFechaInicio()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFechaFin()
+    {
+        $this->resetPage();
     }
 
     public function render()
     {
+        // 4. Actualizamos el filtrado con whereDate
         $ingresos = OtrosIngresosModel::where(function($q) {
                 $q->whereRaw("LOWER(concepto) like ?", ['%' . strtolower($this->search) . '%'])
                   ->orWhereRaw("LOWER(nombre_origen) like ?", ['%' . strtolower($this->search) . '%']);
             })
-            ->where('fecha_ingreso', 'like', $this->mesFilter . '%')
+            ->whereDate('fecha_ingreso', '>=', $this->fecha_inicio)
+            ->whereDate('fecha_ingreso', '<=', $this->fecha_fin)
             ->orderBy('fecha_ingreso', 'desc')
             ->paginate(10);
 
