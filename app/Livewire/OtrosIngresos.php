@@ -65,15 +65,23 @@ class OtrosIngresos extends Component
 
     public function render()
     {
-        // 4. Actualizamos el filtrado con whereDate
-        $ingresos = OtrosIngresosModel::where(function($q) {
-                $q->whereRaw("LOWER(concepto) like ?", ['%' . strtolower($this->search) . '%'])
-                  ->orWhereRaw("LOWER(nombre_origen) like ?", ['%' . strtolower($this->search) . '%']);
-            })
-            ->whereDate('fecha_ingreso', '>=', $this->fecha_inicio)
-            ->whereDate('fecha_ingreso', '<=', $this->fecha_fin)
-            ->orderBy('fecha_ingreso', 'desc')
-            ->paginate(10);
+        // 1. Iniciamos la consulta base con la búsqueda de texto
+        $query = OtrosIngresosModel::where(function($q) {
+            $q->whereRaw("LOWER(concepto) like ?", ['%' . strtolower($this->search) . '%'])
+              ->orWhereRaw("LOWER(nombre_origen) like ?", ['%' . strtolower($this->search) . '%']);
+        });
+
+        // 2. El Escudo: Solo aplicamos el filtro si la variable NO está vacía
+        if (!empty($this->fecha_inicio)) {
+            $query->whereDate('fecha_ingreso', '>=', $this->fecha_inicio);
+        }
+
+        if (!empty($this->fecha_fin)) {
+            $query->whereDate('fecha_ingreso', '<=', $this->fecha_fin);
+        }
+
+        // 3. Ordenamos y paginamos
+        $ingresos = $query->orderBy('fecha_ingreso', 'desc')->paginate(10);
 
         return view('livewire.otros-ingresos', compact('ingresos'));
     }

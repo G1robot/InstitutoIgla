@@ -72,11 +72,21 @@ class Egresos extends Component
 
     public function render()
     {
-        $egresos = EgresoModel::with(['proveedor', 'metodoPago'])
-            ->whereRaw("LOWER(concepto) like ?", ['%' . strtolower($this->search) . '%'])
-            ->whereDate('fecha_egreso', '>=', $this->fecha_inicio)
-            ->whereDate('fecha_egreso', '<=', $this->fecha_fin)
-            ->orderBy('fecha_egreso', 'desc')
+        // 1. Iniciamos la consulta base
+        $query = EgresoModel::with(['proveedor', 'metodoPago'])
+            ->whereRaw("LOWER(concepto) like ?", ['%' . strtolower($this->search) . '%']);
+
+        // 2. El Escudo: Solo aplicamos el filtro si la variable NO está vacía
+        if (!empty($this->fecha_inicio)) {
+            $query->whereDate('fecha_egreso', '>=', $this->fecha_inicio);
+        }
+
+        if (!empty($this->fecha_fin)) {
+            $query->whereDate('fecha_egreso', '<=', $this->fecha_fin);
+        }
+
+        // 3. Ordenamos y paginamos
+        $egresos = $query->orderBy('fecha_egreso', 'desc')
             ->paginate(10);
             
         return view('livewire.egresos', compact('egresos'));

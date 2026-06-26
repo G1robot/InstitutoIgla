@@ -117,12 +117,12 @@
                     <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto">
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-black text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-calendar-day text-green-500"></i> Desde:</span>
-                            <input type="date" wire:model.live="fecha_inicio" 
+                            <input type="date" wire:model.blur="fecha_inicio" 
                                 class="border border-gray-200 rounded-lg p-2 text-sm text-gray-700 font-bold focus:ring-green-500 focus:border-green-500 bg-gray-50 focus:bg-white transition shadow-inner">
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-black text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-calendar-day text-green-500"></i> Hasta:</span>
-                            <input type="date" wire:model.live="fecha_fin" 
+                            <input type="date" wire:model.blur="fecha_fin" 
                                 class="border border-gray-200 rounded-lg p-2 text-sm text-gray-700 font-bold focus:ring-green-500 focus:border-green-500 bg-gray-50 focus:bg-white transition shadow-inner">
                         </div>
                     </div>

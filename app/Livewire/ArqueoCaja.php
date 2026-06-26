@@ -18,8 +18,9 @@ class ArqueoCaja extends Component
     public $egresosEfectivo = 0;
     public $egresosBanco = 0;
 
-    // Listas para el detalle
+    // Listas para el detalle (AÑADIMOS LA NUEVA LISTA)
     public $listaIngresos = [];
+    public $listaOtrosIngresos = [];
     public $listaEgresos = [];
 
     public function mount()
@@ -43,12 +44,13 @@ class ArqueoCaja extends Component
             $this->egresosEfectivo = 0;
             $this->egresosBanco = 0;
             $this->listaIngresos = [];
+            $this->listaOtrosIngresos = [];
             $this->listaEgresos = [];
             return; 
         }
 
-        // 2. Traer transacciones en bruto (AQUÍ SE AÑADIÓ 'pago.estudiante')
-        $transacciones = TransaccionModel::with(['metodo', 'pago.estudiante', 'pago.origen'])
+        // 2. Traer transacciones en bruto
+        $transacciones = TransaccionModel::with(['metodo', 'pago.origen'])
             ->whereDate('fecha_transaccion', $this->fecha_filtro)
             ->whereHas('pago', function($query) {
                 $query->where('estado', '!=', 'anulado'); 
@@ -68,39 +70,67 @@ class ArqueoCaja extends Component
         $this->egresosEfectivo = $egresos->where('metodoPago.es_efectivo', true)->sum('monto');
         $this->egresosBanco = $egresos->where('metodoPago.es_efectivo', false)->sum('monto');
 
-        // 4. AGRUPACIÓN PARA LA VISTA (Evita filas duplicadas por cobros mixtos)
-        $ingresosAgrupados = [];
+        // 4. AGRUPACIÓN Y BIFURCACIÓN DE INGRESOS
+        $ingresosOrdinarios = [];
+        $otrosIngresos = [];
         
         foreach($transacciones as $t) {
             $pagoId = $t->id_pago;
+            $origenType = $t->pago->origen_type ?? '';
             
-            // Si el pago no existe en nuestro arreglo, lo creamos
-            if(!isset($ingresosAgrupados[$pagoId])) {
-                
-                // AQUÍ SE AÑADIÓ LA CAPTURA DEL NOMBRE
-                $estudianteStr = 'Cliente / Varios';
-                if ($t->pago && $t->pago->estudiante) {
-                    $estudianteStr = $t->pago->estudiante->nombre . ' ' . $t->pago->estudiante->apellido;
+            // Evaluamos si pertenece al módulo de OtrosIngresos
+            if (str_contains($origenType, 'OtrosIngresos')) {
+                if(!isset($otrosIngresos[$pagoId])) {
+                    $otrosIngresos[$pagoId] = [
+                        'hora' => \Carbon\Carbon::parse($t->fecha_transaccion)->format('H:i'),
+                        'pago' => $t->pago,
+                        'origen_type' => $origenType,
+                        'descripcion' => $t->pago->descripcion ?? 'Ingreso Extraordinario',
+                        'metodos_usados' => [],
+                        'monto_total' => 0
+                    ];
                 }
+                $otrosIngresos[$pagoId]['metodos_usados'][] = $t->metodo->nombre . ': ' . number_format($t->monto, 2) . ' Bs';
+                $otrosIngresos[$pagoId]['monto_total'] += $t->monto;
+            } else {
+                // De lo contrario, va a la bolsa de ingresos Académicos e Insumos (Ordinarios)
+                if(!isset($ingresosOrdinarios[$pagoId])) {
+                    $estudianteStr = 'Cliente / Varios';
+                    if ($t->pago && $t->pago->estudiante) {
+                        $estudianteStr = $t->pago->estudiante->nombre . ' ' . $t->pago->estudiante->apellido;
+                    }
 
-                $ingresosAgrupados[$pagoId] = [
-                    'hora' => \Carbon\Carbon::parse($t->fecha_transaccion)->format('H:i'),
-                    'pago' => $t->pago,
-                    'origen_type' => $t->pago->origen_type ?? '',
-                    'descripcion' => $t->pago->descripcion ?? 'Ingreso Directo',
-                    'estudiante' => $estudianteStr, // <-- AQUÍ SE GUARDA
-                    'metodos_usados' => [],
-                    'monto_total' => 0
-                ];
+                    $ingresosOrdinarios[$pagoId] = [
+                        'hora' => \Carbon\Carbon::parse($t->fecha_transaccion)->format('H:i'),
+                        'pago' => $t->pago,
+                        'origen_type' => $origenType,
+                        'descripcion' => $t->pago->descripcion ?? 'Ingreso Directo',
+                        'estudiante' => $estudianteStr,
+                        'metodos_usados' => [],
+                        'monto_total' => 0
+                    ];
+                }
+                $ingresosOrdinarios[$pagoId]['metodos_usados'][] = $t->metodo->nombre . ': ' . number_format($t->monto, 2) . ' Bs';
+                $ingresosOrdinarios[$pagoId]['monto_total'] += $t->monto;
             }
-            
-            // Acumulamos los métodos y la plata en ese pago
-            $ingresosAgrupados[$pagoId]['metodos_usados'][] = $t->metodo->nombre . ': ' . number_format($t->monto, 2) . ' Bs';
-            $ingresosAgrupados[$pagoId]['monto_total'] += $t->monto;
         }
 
-        // Pasamos a la vista la lista ya agrupada y limpia
+        // Pasamos a la vista las listas ya filtradas, limpias y ordenadas
+        $this->listaIngresos = collect($ingresosOrdinarios)->values();
+        $this->listaOtrosIngresos = collect($ingresosAgrupados = $ingresosAgrupados ?? $ingresosAgrupados = [])->values(); // Evitar nulos
+        $this->listaIngresos = collect($ingresosAgrupados ?? [])->values(); // Variable controlada
+        
+        // Mapeo real limpio de colecciones
         $this->listaIngresos = collect($ingresosAgrupados)->values();
+        $this->listaIngresos = collect($ingresosAgrupados)->values();
+        
+        // Corrección directa sobre las colecciones asignadas a propiedades públicas
+        $this->listaIngresos = collect($ingresosAgrupados)->values();
+        $this->listaEgresos = $egresos;
+        
+        // Para que se entienda sin rodeos de colecciones dinámicas:
+        $this->listaIngresos = collect($ingresosOrdinarios)->values();
+        $this->listaOtrosIngresos = collect($otrosIngresos)->values();
         $this->listaEgresos = $egresos;
     }
     

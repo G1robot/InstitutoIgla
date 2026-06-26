@@ -40,16 +40,25 @@ class ControlInsumos extends Component
     public $datosRecibo = null;
     public $ultimoIdVenta = null;
 
+    // Modal Múltiple (Pagos)
     public $showModalMultiple = false;
     public $estudianteMultiple = null;
     public $fechasMultiple = [];
     public $montosPago = [];
 
+    // NUEVO: Modal Estados Múltiples (Faltas / Licencias)
+    public $showModalEstado = false;
+    public $estudianteEstado = null;
+    public $estadoSeleccionado = '';
+    public $fechasEstado = [];
+
+    // Modal Abono
     public $showModalAbono = false;
     public $estudianteAbono = null;
     public $controlInsumoActivo = null;
     public $monto_a_abonar = 0;
     public $deuda_actual = 0;
+    public $fecha_abono; // NUEVO: Fecha específica para el abono
 
     public function mount()
     {
@@ -75,41 +84,79 @@ class ControlInsumos extends Component
         $this->resetPage();
     }
 
-    public function updatingFechaSemana()
+    // ========================================================
+    // NUEVA LÓGICA: Faltas y Licencias Múltiples
+    // ========================================================
+    public function abrirModalEstado($id_estudiante, $estado)
     {
-        $this->resetPage();
+        $this->estudianteEstado = EstudianteModel::find($id_estudiante);
+        $this->estadoSeleccionado = $estado;
+        $this->fechasEstado = [Carbon::now()->format('Y-m-d')];
+        $this->showModalEstado = true;
     }
 
-    // ========================================================
-    // FUNCIÓN LIMPIA: Solo registra estados no financieros
-    // ========================================================
-    public function registrarEstado($id_estudiante, $estado)
+    public function agregarFechaEstado()
     {
-        // 1. Verificación anti-duplicados para la semana actual
-        $inicioSemana = Carbon::parse($this->fecha_semana)->startOfWeek()->format('Y-m-d');
-        $finSemana = Carbon::parse($this->fecha_semana)->endOfWeek()->format('Y-m-d');
+        $ultimaFecha = end($this->fechasEstado);
+        $nuevaFecha = $ultimaFecha ? Carbon::parse($ultimaFecha)->addDays(7)->format('Y-m-d') : Carbon::now()->format('Y-m-d');
+        $this->fechasEstado[] = $nuevaFecha;
+    }
 
-        $existe = ControlInsumoModel::where('id_estudiante', $id_estudiante)
-            ->whereBetween('fecha_semana', [$inicioSemana, $finSemana])
-            ->where('estado', '!=', 'anulado')
-            ->first();
+    public function quitarFechaEstado($indice)
+    {
+        unset($this->fechasEstado[$indice]);
+        $this->fechasEstado = array_values($this->fechasEstado);
+    }
 
-        if ($existe) {
-            $this->dispatch('toast', ['icon' => 'warning', 'title' => 'Ya existe un registro para esta semana.']);
-            return;
+    public function cerrarModalEstado()
+    {
+        $this->showModalEstado = false;
+        $this->estudianteEstado = null;
+        $this->estadoSeleccionado = '';
+        $this->fechasEstado = [];
+    }
+
+    public function procesarEstadoMultiple()
+    {
+        if(empty($this->fechasEstado)) {
+            $this->addError('estado', 'Debe agregar al menos una fecha.'); return;
         }
 
-        // 2. Registro directo de estados simples (falta, licencia, etc.)
-        ControlInsumoModel::create([
-            'id_estudiante' => $id_estudiante,
-            'fecha_semana' => $this->fecha_semana,
-            'estado' => $estado,
-            'id_venta' => null
-        ]);
+        $semanasSeleccionadas = [];
+        foreach($this->fechasEstado as $fecha) {
+            $inicioSemana = Carbon::parse($fecha)->startOfWeek()->format('Y-m-d');
+            $finSemana = Carbon::parse($fecha)->endOfWeek()->format('Y-m-d');
 
-        $this->dispatch('toast', ['icon' => 'success', 'title' => 'Estado registrado exitosamente.']);
+            if (in_array($inicioSemana, $semanasSeleccionadas)) {
+                $this->addError('estado', 'Has añadido dos fechas que pertenecen a la misma semana.'); return;
+            }
+            $semanasSeleccionadas[] = $inicioSemana;
+
+            $existe = ControlInsumoModel::where('id_estudiante', $this->estudianteEstado->id_estudiante)
+                        ->whereBetween('fecha_semana', [$inicioSemana, $finSemana])
+                        ->where('estado', '!=', 'anulado')->first();
+                        
+            if($existe) {
+                $this->addError('estado', "El alumno ya tiene un registro en la semana del " . Carbon::parse($inicioSemana)->format('d/m/Y')); return;
+            }
+        }
+
+        foreach($this->fechasEstado as $fecha) {
+            ControlInsumoModel::create([
+                'id_estudiante' => $this->estudianteEstado->id_estudiante,
+                'fecha_semana' => $fecha,
+                'estado' => $this->estadoSeleccionado,
+                'id_venta' => null
+            ]);
+        }
+
+        $this->cerrarModalEstado();
+        $this->dispatch('toast', ['icon' => 'success', 'title' => ucfirst($this->estadoSeleccionado) . ' registrada exitosamente.']);
     }
 
+    // ========================================================
+    // LÓGICAS RESTANTES
+    // ========================================================
     public function cerrarModalExito() 
     {
         $this->showModalExito = false;
@@ -151,7 +198,7 @@ class ControlInsumos extends Component
     public function abrirCobroMultiple($id_estudiante)
     {
         $this->estudianteMultiple = EstudianteModel::find($id_estudiante);
-        $this->fechasMultiple = [$this->fecha_semana]; 
+        $this->fechasMultiple = [Carbon::now()->format('Y-m-d')]; 
         $this->montosPago = [];
         $this->showModalMultiple = true;
     }
@@ -322,10 +369,10 @@ class ControlInsumos extends Component
     public function render()
     {
         $search = mb_strtolower(trim($this->search));
-        $fecha = $this->fecha_semana;
-
-        $inicioSemana = Carbon::parse($fecha)->startOfWeek()->format('Y-m-d');
-        $finSemana = Carbon::parse($fecha)->endOfWeek()->format('Y-m-d');
+        
+        // El render siempre evalúa la semana actual (hoy) para mostrar la lista principal
+        $inicioSemana = Carbon::now()->startOfWeek()->format('Y-m-d');
+        $finSemana = Carbon::now()->endOfWeek()->format('Y-m-d');
 
         $estudiantes = EstudianteModel::with(['controlInsumos' => function($query) use ($inicioSemana, $finSemana) {
                 $query->whereBetween('fecha_semana', [$inicioSemana, $finSemana])
@@ -360,7 +407,8 @@ class ControlInsumos extends Component
     public function abrirModalAbono($id_estudiante, $id_control_insumo = null)
     {
         $this->estudianteAbono = EstudianteModel::find($id_estudiante);
-        
+        $this->fecha_abono = Carbon::now()->format('Y-m-d'); // Default hoy
+
         if ($id_control_insumo) {
             $this->controlInsumoActivo = ControlInsumoModel::with('venta.pago')->find($id_control_insumo);
             $pago = $this->controlInsumoActivo->venta->pago;
@@ -396,15 +444,13 @@ class ControlInsumos extends Component
         }
 
         if (!$this->metodo_pago_seleccionado) {
-            $this->addError('general', 'Debe seleccionar un método de pago.');
-            $this->cerrarModalAbono();
+            $this->addError('abono', 'Debe seleccionar un método de pago.');
             return;
         }
 
         $cajaAbierta = CajaModel::where('id_usuario', Auth::id())->where('estado', 'abierta')->first();
         if (!$cajaAbierta) {
-            $this->addError('general', 'No tienes una caja abierta.');
-            $this->cerrarModalAbono();
+            $this->addError('abono', 'No tienes una caja abierta.');
             return;
         }
 
@@ -455,7 +501,7 @@ class ControlInsumos extends Component
                     'id_estudiante' => $this->estudianteAbono->id_estudiante,
                     'fecha_vencimiento' => Carbon::now(),
                     'fecha_pago' => Carbon::now(),
-                    'descripcion' => 'Insumo Semanal (' . $this->fecha_semana . ')',
+                    'descripcion' => 'Insumo Semanal (' . Carbon::parse($this->fecha_abono)->format('d/m') . ')',
                     'monto_total' => $articulo->precio,
                     'monto_abonado' => $monto,
                     'estado' => 'parcial'
@@ -469,9 +515,10 @@ class ControlInsumos extends Component
                     'fecha_transaccion' => Carbon::now()
                 ]);
 
+                // Guardamos el insumo con la fecha seleccionada en el input
                 ControlInsumoModel::create([
                     'id_estudiante' => $this->estudianteAbono->id_estudiante,
-                    'fecha_semana' => $this->fecha_semana,
+                    'fecha_semana' => $this->fecha_abono,
                     'estado' => 'pendiente',
                     'id_venta' => $venta->id_venta
                 ]);
@@ -488,7 +535,7 @@ class ControlInsumos extends Component
                 'items' => [
                     [
                         'cantidad' => 1,
-                        'nombre' => 'ABONO - Insumo Semanal (' . Carbon::parse($this->fecha_semana)->format('d/m') . ')',
+                        'nombre' => 'ABONO - Insumo Semanal',
                         'precio' => $monto,
                         'subtotal' => $monto
                     ]

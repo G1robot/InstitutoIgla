@@ -128,7 +128,7 @@
                                     <div class="mt-5 flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                                         <div class="mt-5 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                                             {{-- CAMBIO FECHA --}}
-                                            <div class=" hidden mb-4 bg-orange-50 p-3 rounded-lg border border-orange-200">
+                                            <div class=" mb-4 bg-orange-50 p-3 rounded-lg border border-orange-200">
                                                 <label class="block text-[10px] font-black text-orange-800 uppercase mb-1 flex items-center gap-1">
                                                     <i class="fa-solid fa-calendar-day"></i> Fecha del Pago (Modo Migración)
                                                 </label>

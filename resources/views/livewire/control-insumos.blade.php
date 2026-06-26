@@ -9,8 +9,6 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-            
-                    {{-- Selector de Tipo de Insumo (Único necesario para los precios) --}}
                     <div class="relative w-full sm:w-auto min-w-[200px]">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-box text-gray-400"></i>
@@ -23,7 +21,6 @@
                         </select>
                     </div>
 
-                    {{-- Buscador --}}
                     <div class="relative w-full sm:w-auto min-w-[250px]">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
@@ -99,12 +96,13 @@
                                                     <i class="fa-solid fa-coins mr-1"></i> Abonar
                                                 </button>
                                                 
-                                                <button wire:click="registrarEstado({{ $est->id_estudiante }}, 'falta')" wire:loading.attr="disabled"
+                                                {{-- NUEVO: Llaman al modal de estados en lugar de registrar directo --}}
+                                                <button wire:click="abrirModalEstado({{ $est->id_estudiante }}, 'falta')" wire:loading.attr="disabled"
                                                     class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-3 py-2 rounded-lg transition border border-red-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Marcar Falta">
                                                     <i class="fa-solid fa-user-xmark mr-1"></i> Falta
                                                 </button>
 
-                                                <button wire:click="registrarEstado({{ $est->id_estudiante }}, 'licencia')" wire:loading.attr="disabled"
+                                                <button wire:click="abrirModalEstado({{ $est->id_estudiante }}, 'licencia')" wire:loading.attr="disabled"
                                                     class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-lg transition border border-blue-200 shadow-sm text-xs font-bold disabled:opacity-50" title="Licencia">
                                                     <i class="fa-solid fa-notes-medical mr-1"></i> Lic.
                                                 </button>
@@ -205,6 +203,66 @@
                     </div>
                 </div>
             </div>
+        @endif
+
+        {{-- NUEVO MODAL: ESTADOS MÚLTIPLES (Falta / Licencia) --}}
+        @if($showModalEstado)
+        <div class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75 backdrop-blur-sm" wire:click="cerrarModalEstado"></div>
+
+                <div class="relative inline-block w-full max-w-md p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl animate-fade-in-up">
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                        <div>
+                            <h3 class="text-lg font-black text-gray-800 uppercase">
+                                <i class="fa-solid {{ $estadoSeleccionado == 'falta' ? 'fa-user-xmark text-red-500' : 'fa-notes-medical text-blue-500' }} mr-2"></i> 
+                                Registrar {{ ucfirst($estadoSeleccionado) }}
+                            </h3>
+                            <p class="text-sm text-gray-500 font-bold">{{ $estudianteEstado->nombre }} {{ $estudianteEstado->apellido }}</p>
+                        </div>
+                        <button wire:click="cerrarModalEstado" class="text-gray-400 hover:text-red-500 transition w-8 h-8 rounded-full bg-gray-50 hover:bg-red-50 flex items-center justify-center">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
+
+                    @error('estado') 
+                        <div class="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold border border-red-200 shadow-sm">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> {{ $message }}
+                        </div>
+                    @enderror
+
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Fechas de la(s) semana(s):</label>
+                        <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                            @foreach($fechasEstado as $index => $fecha)
+                                <div class="flex items-center gap-2">
+                                    <div class="relative flex-1">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fa-regular fa-calendar text-gray-400"></i>
+                                        </div>
+                                        <input type="date" wire:model="fechasEstado.{{ $index }}" class="w-full pl-10 px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+                                    </div>
+                                    @if(count($fechasEstado) > 1)
+                                        <button wire:click="quitarFechaEstado({{ $index }})" class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white w-10 h-10 rounded-lg flex items-center justify-center transition border border-red-200 shadow-sm">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                        
+                        <button wire:click="agregarFechaEstado" class="mt-3 w-full border-2 border-dashed border-gray-300 bg-gray-50 text-gray-600 hover:border-gray-500 hover:bg-gray-100 py-2.5 rounded-xl font-bold text-sm transition shadow-sm">
+                            <i class="fa-solid fa-plus mr-1"></i> Añadir otra semana
+                        </button>
+                    </div>
+
+                    <button wire:click="procesarEstadoMultiple" wire:loading.attr="disabled" class="w-full bg-gray-800 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50">
+                        <span wire:loading.remove wire:target="procesarEstadoMultiple"><i class="fa-solid fa-save"></i> Guardar Registro</span>
+                        <span wire:loading wire:target="procesarEstadoMultiple"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
         @endif
 
         {{-- MODAL DE COBRO MÚLTIPLE --}}
@@ -319,12 +377,30 @@
                         </button>
                     </div>
 
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-5 flex justify-between items-center shadow-sm">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 flex justify-between items-center shadow-sm">
                         <div>
                             <span class="block text-[10px] font-black text-yellow-700 uppercase tracking-widest">Deuda Actual</span>
                             <span class="text-3xl font-black text-yellow-800 leading-none">{{ number_format($deuda_actual, 2) }} <span class="text-sm text-yellow-600">Bs</span></span>
                         </div>
                         <i class="fa-solid fa-file-invoice-dollar text-4xl text-yellow-300 opacity-50"></i>
+                    </div>
+
+                    {{-- NUEVO: Selector de Fecha para el Abono --}}
+                    <div class="mb-4">
+                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">Semana a la que corresponde:</label>
+                        @if(!$controlInsumoActivo)
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa-regular fa-calendar text-gray-400"></i>
+                                </div>
+                                <input type="date" wire:model="fecha_abono" class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl text-sm font-bold text-gray-700 focus:ring-yellow-500 focus:border-yellow-500 shadow-sm transition">
+                            </div>
+                        @else
+                            {{-- Si ya hay deuda creada, solo mostramos a qué semana pertenece --}}
+                            <div class="bg-gray-100 p-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 text-center">
+                                <i class="fa-regular fa-calendar mr-1"></i> {{ \Carbon\Carbon::parse($controlInsumoActivo->fecha_semana)->format('d/m/Y') }}
+                            </div>
+                        @endif
                     </div>
 
                     <div class="mb-4">
@@ -333,13 +409,11 @@
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <span class="text-gray-400 font-black">Bs</span>
                             </div>
-                            {{-- MAGIA DEL BLUR APLICADA AQUÍ --}}
                             <input type="number" step="0.50" wire:model.blur="monto_a_abonar" class="w-full pl-12 pr-3 py-3.5 border-2 border-gray-300 rounded-xl text-xl font-black text-gray-800 focus:ring-yellow-500 focus:border-yellow-500 transition shadow-inner" placeholder="0.00">
                         </div>
                         @error('abono') <span class="text-red-500 text-xs font-bold mt-2 block"><i class="fa-solid fa-triangle-exclamation"></i> {{ $message }}</span> @enderror
                     </div>
 
-                    {{-- NUEVO: SELECTOR DE MÉTODO DE PAGO MOVIDO AQUÍ ADENTRO --}}
                     <div class="mb-6">
                         <label class="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">¿Cómo está pagando este abono?</label>
                         <div class="relative">
@@ -353,6 +427,7 @@
                                 @endforeach
                             </select>
                         </div>
+                        @error('general') <span class="text-red-500 text-xs font-bold mt-2 block"><i class="fa-solid fa-triangle-exclamation"></i> {{ $message }}</span> @enderror
                     </div>
 
                     <button wire:click="procesarAbono" wire:loading.attr="disabled" class="w-full bg-gray-800 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50">
@@ -396,7 +471,7 @@
     @endif
 
     {{-- ========================================== --}}
-    {{-- RECIBO PARA IMPRIMIR (Reutilizamos tu código) --}}
+    {{-- RECIBO PARA IMPRIMIR --}}
     {{-- ========================================== --}}
     @if($datosRecibo)
     <div class="zona-impresion bg-white">
@@ -451,13 +526,11 @@
 
         <div class="flex justify-end mb-6">
             <div class="w-full sm:w-3/4 text-sm text-right border-t-2 border-gray-800 pt-1">
-                {{-- TOTAL A PAGAR --}}
                 <div class="flex justify-between font-black text-base mb-1">
                     <span>TOTAL Bs:</span>
                     <span>{{ number_format($datosRecibo['total'], 2) }}</span>
                 </div>
                 
-                {{-- DETALLE DE EFECTIVO Y CAMBIO --}}
                 @if(isset($datosRecibo['ingresado']))
                 <div class="flex justify-between text-xs text-gray-600 mb-0.5">
                     <span>Recibido:</span>
@@ -469,7 +542,6 @@
                 </div>
                 @endif
 
-                {{-- DESGLOSE DE MÉTODOS DE PAGO --}}
                 @if(isset($datosRecibo['metodos_pago']))
                 <div class="text-[10px] text-gray-500 font-bold border-t border-dashed border-gray-300 pt-1 text-right">
                     Pagado con: {{ $datosRecibo['metodos_pago'] }}
@@ -485,9 +557,6 @@
     </div>
     @endif
 
-    {{-- ========================================== --}}
-    {{-- CSS MÁGICO PARA IMPRESIÓN (El mismo que usas) --}}
-    {{-- ========================================== --}}
     <style>
         .zona-impresion { display: none; }
         @media print {

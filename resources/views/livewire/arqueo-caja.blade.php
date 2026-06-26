@@ -134,7 +134,7 @@
 
     {{-- 3.2 Detalle de Ingresos --}}
     <div class="mb-8 bg-white print:bg-transparent rounded-xl shadow-sm print:shadow-none border border-gray-100 print:border-none p-5 print:p-0 overflow-hidden">
-        <h3 class="font-bold border-b border-gray-400 mb-2 uppercase text-sm bg-gray-50 print:bg-gray-100 p-2 rounded print:rounded-none">2. Detalle de Ingresos</h3>
+        <h3 class="font-bold border-b border-gray-400 mb-2 uppercase text-sm bg-gray-50 print:bg-gray-100 p-2 rounded print:rounded-none text-blue-700">2. Detalle de Ingresos (Académico / POS)</h3>
         <div class="overflow-x-auto print:overflow-visible">
             <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
                 <thead class="bg-white print:bg-transparent">
@@ -148,13 +148,11 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 print:divide-dashed print:divide-gray-300">
                     @forelse($listaIngresos as $ingreso)
-                        <tr class="hover:bg-green-50 transition-colors">
+                        <tr class="hover:bg-blue-50/40 transition-colors">
                             <td class="py-2 print:py-1.5 align-top text-gray-600 print:text-black">{{ $ingreso['hora'] }}</td>
                             <td class="py-2 print:py-1.5 align-top">
                                 @if(str_contains($ingreso['origen_type'], 'Venta'))
                                     <span class="bg-gray-100 print:bg-transparent border border-gray-300 print:border-none text-gray-700 print:text-black px-1.5 py-0.5 print:p-0 rounded text-[9px] print:text-xs font-black uppercase tracking-wider">Tienda POS</span>
-                                @elseif(str_contains($ingreso['origen_type'], 'OtrosIngresos'))
-                                    <span class="bg-green-50 print:bg-transparent border border-green-200 print:border-none text-green-700 print:text-black px-1.5 py-0.5 print:p-0 rounded text-[9px] print:text-xs font-black uppercase tracking-wider">Extra / Otros</span>
                                 @else
                                     <span class="bg-blue-50 print:bg-transparent border border-blue-200 print:border-none text-blue-700 print:text-black px-1.5 py-0.5 print:p-0 rounded text-[9px] print:text-xs font-black uppercase tracking-wider">Académico</span>
                                 @endif
@@ -163,18 +161,15 @@
                                 <div class="font-bold text-gray-800 print:text-black leading-tight">
                                     {{ $ingreso['descripcion'] }}
                                 </div>
-                                
-                                {{-- NUEVO: NOMBRE DEL ESTUDIANTE --}}
                                 <div class="text-[10px] text-blue-600 print:text-gray-600 font-bold mt-0.5 tracking-wide">
                                     <i class="fa-solid fa-user mr-1"></i> {{ $ingreso['estudiante'] }}
                                 </div>
                                 
-                                {{-- MAGIA: Si es una Venta de POS, listamos lo que llevó --}}
                                 @if(str_contains($ingreso['origen_type'], 'Venta') && $ingreso['pago']->origen)
                                     <div class="text-[10px] text-gray-500 print:text-gray-700 mt-1 leading-tight border-l-2 border-gray-200 print:border-gray-400 pl-1.5 ml-1">
                                         @foreach($ingreso['pago']->origen->detalles as $detalle)
                                             <div class="mb-0.5">
-                                                <span class="font-black">{{ $detalle->cantidad }}x</span> 
+                                                <span class="font-black">{{ $detalle->whitespace_nowrap ?? $detalle->cantidad }}x</span> 
                                                 <span>{{ $detalle->articulo->nombre ?? 'Artículo' }}</span>
                                             </div>
                                         @endforeach
@@ -182,17 +177,57 @@
                                 @endif
                             </td>
                             <td class="py-2 print:py-1.5 align-top">
-                                {{-- Muestra el desglose de métodos en pequeñas líneas --}}
                                 <div class="flex flex-col gap-0.5 text-xs text-gray-600 print:text-black">
                                     @foreach($ingreso['metodos_usados'] as $metodo)
                                         <span>{{ $metodo }}</span>
                                     @endforeach
                                 </div>
                             </td>
-                            <td class="py-2 print:py-1.5 text-right align-top font-bold text-green-600 print:text-black">+{{ number_format($ingreso['monto_total'], 2) }}</td>
+                            <td class="py-2 print:py-1.5 text-right align-top font-bold text-blue-600 print:text-black">+{{ number_format($ingreso['monto_total'], 2) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="py-6 print:py-2 text-center text-gray-500 italic">No hubo ingresos en esta fecha.</td></tr>
+                        <tr><td colspan="5" class="py-6 print:py-2 text-center text-gray-400 font-medium">No hubo ingresos ordinarios en esta fecha.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- NUEVA SECCIÓN: 3. Detalle de Otros Ingresos (Extraordinarios) --}}
+    <div class="mb-8 bg-white print:bg-transparent rounded-xl shadow-sm print:shadow-none border border-gray-100 print:border-none p-5 print:p-0 overflow-hidden">
+        <h3 class="font-bold border-b border-gray-400 mb-2 uppercase text-sm bg-gray-50 print:bg-gray-100 p-2 rounded print:rounded-none text-green-700">3. Detalle de Otros Ingresos (Módulo Extras)</h3>
+        <div class="overflow-x-auto print:overflow-visible">
+            <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
+                <thead class="bg-white print:bg-transparent">
+                    <tr class="border-b print:border-black">
+                        <th class="py-2 print:py-1 w-16 font-bold text-gray-500 print:text-black">Hora</th>
+                        <th class="py-2 print:py-1 w-32 font-bold text-gray-500 print:text-black">Módulo Origen</th>
+                        <th class="py-2 print:py-1 font-bold text-gray-500 print:text-black">Descripción / Concepto</th>
+                        <th class="py-2 print:py-1 font-bold text-gray-500 print:text-black">Método</th>
+                        <th class="py-2 print:py-1 text-right font-bold text-gray-500 print:text-black">Monto</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 print:divide-dashed print:divide-gray-300">
+                    @forelse($listaOtrosIngresos as $ingresoExtra)
+                        <tr class="hover:bg-green-50/40 transition-colors">
+                            <td class="py-2 print:py-1.5 align-top text-gray-600 print:text-black">{{ $ingresoExtra['hora'] }}</td>
+                            <td class="py-2 print:py-1.5 align-top">
+                                <span class="bg-green-50 print:bg-transparent border border-green-200 print:border-none text-green-700 print:text-black px-1.5 py-0.5 print:p-0 rounded text-[9px] print:text-xs font-black uppercase tracking-wider">Extra / Otros</span>
+                            </td>
+                            <td class="py-2 print:py-1.5 align-top font-bold text-gray-800 print:text-black">
+                                {{ $ingresoExtra['descripcion'] }}
+                            </td>
+                            <td class="py-2 print:py-1.5 align-top">
+                                <div class="flex flex-col gap-0.5 text-xs text-gray-600 print:text-black">
+                                    @foreach($ingresoExtra['metodos_usados'] as $metodo)
+                                        <span>{{ $metodo }}</span>
+                                    @endforeach
+                                </div>
+                            </td>
+                            <td class="py-2 print:py-1.5 text-right align-top font-bold text-green-600 print:text-black">+{{ number_format($ingresoExtra['monto_total'], 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="py-6 print:py-2 text-center text-gray-400 font-medium">No se registraron otros ingresos extraordinarios.</td></tr>
                     @endforelse
                 </tbody>
             </table>
